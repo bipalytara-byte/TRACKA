@@ -5,6 +5,320 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TRACKA — Laporan Progress TA/Skripsi</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+// ============================================================
+// EXPORT PDF — LAPORAN DOSEN
+// ============================================================
+function exportPDF() {
+  const filled = mahasiswaList.filter(m => progressData[String(m.nim)]);
+  if (filled.length === 0) {
+    showToast('Belum ada data yang tersimpan!', 'error');
+    return;
+  }
+
+  showToast('⏳ Membuat PDF...', '');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const now = new Date();
+  const tglCetak = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  const namaShort = dosenNama.split(',')[0];
+
+  // ── HEADER ──
+  doc.setFillColor(26, 26, 46);
+  doc.rect(0, 0, 210, 38, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('TRACKA — Laporan Progress Bimbingan TA/Skripsi', 14, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Pekan TRACKA 22–27 Juni 2026  |  BIPA Magelang', 14, 21);
+  doc.text('Dicetak: ' + tglCetak, 14, 28);
+
+  // Accent bar
+  doc.setFillColor(233, 69, 96);
+  doc.rect(0, 38, 210, 2, 'F');
+
+  // ── INFO DOSEN ──
+  doc.setTextColor(26, 26, 46);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Dosen Pembimbing', 14, 48);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(dosenNama, 14, 55);
+
+  // ── SUMMARY CARDS ──
+  const cardData = [
+    { label: 'Total Mahasiswa', val: mahasiswaList.length },
+    { label: 'Sudah Dilaporkan', val: filled.length },
+    { label: 'Siap Maju Juli', val: Object.values(progressData).filter(p => p.kesanggupan === 'Siap Juli').length },
+    { label: 'Total Sesi', val: Object.keys(progressData).length },
+  ];
+  const cardW = 43, cardH = 18, cardY = 60;
+  cardData.forEach((c, i) => {
+    const x = 14 + i * (cardW + 2);
+    doc.setFillColor(240, 242, 245);
+    doc.roundedRect(x, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(26, 26, 46);
+    doc.text(String(c.val), x + cardW/2, cardY + 10, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(c.label, x + cardW/2, cardY + 15, { align: 'center' });
+  });
+
+  // ── TABEL PROGRESS TERBARU PER MAHASISWA ──
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Status Progress Mahasiswa', 14, 88);
+
+  // Pisah PB1 dan PB2
+  const pb1 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 1');
+  const pb2 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 2');
+  const allSorted = [...pb1, ...pb2];
+
+  const tableRows = allSorted.map((m, i) => {
+    const nim = String(m.nim);
+    const p = progressData[nim];
+    return [
+      i + 1,
+      m.nama,
+      m.nim,
+      m.posisi === 'Pembimbing 1' ? 'PB1' : 'PB2',
+      p ? (p.tglBimbingan || p.periode || '—') : '—',
+      p ? 'Ke-' + (p.bimbinganKe || '?') : '—',
+      p ? (p.topikBimbingan || '—') : '—',
+      p ? (p.statusProgress || '—') : 'Belum diisi',
+      p ? (p.kesanggupan || '—') : '—',
+      p ? (p.catatanDosen || '—') : '—',
+    ];
+  });
+
+  doc.autoTable({
+    startY: 91,
+    head: [['No','Nama','NIM','Pos','Tgl','Sesi','Topik','Status Progress','Kesanggupan','Catatan']],
+    body: tableRows,
+    styles: { fontSize: 7.5, cellPadding: 2.5, overflow: 'linebreak' },
+    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+    columnStyles: {
+      0: { cellWidth: 7 },
+      1: { cellWidth: 38 },
+      2: { cellWidth: 16 },
+      3: { cellWidth: 9 },
+      4: { cellWidth: 17 },
+      5: { cellWidth: 10 },
+      6: { cellWidth: 28 },
+      7: { cellWidth: 30 },
+      8: { cellWidth: 22 },
+      9: { cellWidth: 18 },
+    },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+    didParseCell: function(data) {
+      if (data.section === 'body') {
+        if (data.column.index === 8) {
+          const val = data.cell.raw;
+          if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
+          else if (val === 'Siap Agustus') data.cell.styles.textColor = [146, 64, 14];
+          else if (val === 'Belum diisi') data.cell.styles.textColor = [233, 69, 96];
+        }
+        if (data.column.index === 7 && data.cell.raw === 'Belum diisi') {
+          data.cell.styles.textColor = [233, 69, 96];
+        }
+      }
+    }
+  });
+
+  // ── TANDA TANGAN ──
+  const finalY = doc.lastAutoTable.finalY + 14;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Magelang, ' + tglCetak, 140, finalY);
+  doc.text('Dosen Pembimbing,', 140, finalY + 7);
+  doc.line(140, finalY + 28, 196, finalY + 28);
+  doc.setFont('helvetica', 'bold');
+  doc.text(namaShort, 140, finalY + 33);
+
+  // ── FOOTER ──
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7.5);
+    doc.setTextColor(180);
+    doc.text('TRACKA — Sistem Tracking Aktivitas Akademik TA/Skripsi | BIPA', 14, 290);
+    doc.text('Hal ' + i + '/' + pageCount, 196, 290, { align: 'right' });
+  }
+
+  const filename = 'TRACKA_Laporan_' + namaShort.replace(/\s+/g,'_') + '_' +
+    now.toISOString().split('T')[0] + '.pdf';
+  doc.save(filename);
+  showToast('✅ PDF berhasil diunduh!', 'success');
+}
+
+</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js">
+// ============================================================
+// EXPORT PDF — LAPORAN DOSEN
+// ============================================================
+function exportPDF() {
+  const filled = mahasiswaList.filter(m => progressData[String(m.nim)]);
+  if (filled.length === 0) {
+    showToast('Belum ada data yang tersimpan!', 'error');
+    return;
+  }
+
+  showToast('⏳ Membuat PDF...', '');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const now = new Date();
+  const tglCetak = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  const namaShort = dosenNama.split(',')[0];
+
+  // ── HEADER ──
+  doc.setFillColor(26, 26, 46);
+  doc.rect(0, 0, 210, 38, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('TRACKA — Laporan Progress Bimbingan TA/Skripsi', 14, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Pekan TRACKA 22–27 Juni 2026  |  BIPA Magelang', 14, 21);
+  doc.text('Dicetak: ' + tglCetak, 14, 28);
+
+  // Accent bar
+  doc.setFillColor(233, 69, 96);
+  doc.rect(0, 38, 210, 2, 'F');
+
+  // ── INFO DOSEN ──
+  doc.setTextColor(26, 26, 46);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Dosen Pembimbing', 14, 48);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(dosenNama, 14, 55);
+
+  // ── SUMMARY CARDS ──
+  const cardData = [
+    { label: 'Total Mahasiswa', val: mahasiswaList.length },
+    { label: 'Sudah Dilaporkan', val: filled.length },
+    { label: 'Siap Maju Juli', val: Object.values(progressData).filter(p => p.kesanggupan === 'Siap Juli').length },
+    { label: 'Total Sesi', val: Object.keys(progressData).length },
+  ];
+  const cardW = 43, cardH = 18, cardY = 60;
+  cardData.forEach((c, i) => {
+    const x = 14 + i * (cardW + 2);
+    doc.setFillColor(240, 242, 245);
+    doc.roundedRect(x, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(26, 26, 46);
+    doc.text(String(c.val), x + cardW/2, cardY + 10, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(c.label, x + cardW/2, cardY + 15, { align: 'center' });
+  });
+
+  // ── TABEL PROGRESS TERBARU PER MAHASISWA ──
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Status Progress Mahasiswa', 14, 88);
+
+  // Pisah PB1 dan PB2
+  const pb1 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 1');
+  const pb2 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 2');
+  const allSorted = [...pb1, ...pb2];
+
+  const tableRows = allSorted.map((m, i) => {
+    const nim = String(m.nim);
+    const p = progressData[nim];
+    return [
+      i + 1,
+      m.nama,
+      m.nim,
+      m.posisi === 'Pembimbing 1' ? 'PB1' : 'PB2',
+      p ? (p.tglBimbingan || p.periode || '—') : '—',
+      p ? 'Ke-' + (p.bimbinganKe || '?') : '—',
+      p ? (p.topikBimbingan || '—') : '—',
+      p ? (p.statusProgress || '—') : 'Belum diisi',
+      p ? (p.kesanggupan || '—') : '—',
+      p ? (p.catatanDosen || '—') : '—',
+    ];
+  });
+
+  doc.autoTable({
+    startY: 91,
+    head: [['No','Nama','NIM','Pos','Tgl','Sesi','Topik','Status Progress','Kesanggupan','Catatan']],
+    body: tableRows,
+    styles: { fontSize: 7.5, cellPadding: 2.5, overflow: 'linebreak' },
+    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+    columnStyles: {
+      0: { cellWidth: 7 },
+      1: { cellWidth: 38 },
+      2: { cellWidth: 16 },
+      3: { cellWidth: 9 },
+      4: { cellWidth: 17 },
+      5: { cellWidth: 10 },
+      6: { cellWidth: 28 },
+      7: { cellWidth: 30 },
+      8: { cellWidth: 22 },
+      9: { cellWidth: 18 },
+    },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+    didParseCell: function(data) {
+      if (data.section === 'body') {
+        if (data.column.index === 8) {
+          const val = data.cell.raw;
+          if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
+          else if (val === 'Siap Agustus') data.cell.styles.textColor = [146, 64, 14];
+          else if (val === 'Belum diisi') data.cell.styles.textColor = [233, 69, 96];
+        }
+        if (data.column.index === 7 && data.cell.raw === 'Belum diisi') {
+          data.cell.styles.textColor = [233, 69, 96];
+        }
+      }
+    }
+  });
+
+  // ── TANDA TANGAN ──
+  const finalY = doc.lastAutoTable.finalY + 14;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Magelang, ' + tglCetak, 140, finalY);
+  doc.text('Dosen Pembimbing,', 140, finalY + 7);
+  doc.line(140, finalY + 28, 196, finalY + 28);
+  doc.setFont('helvetica', 'bold');
+  doc.text(namaShort, 140, finalY + 33);
+
+  // ── FOOTER ──
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7.5);
+    doc.setTextColor(180);
+    doc.text('TRACKA — Sistem Tracking Aktivitas Akademik TA/Skripsi | BIPA', 14, 290);
+    doc.text('Hal ' + i + '/' + pageCount, 196, 290, { align: 'right' });
+  }
+
+  const filename = 'TRACKA_Laporan_' + namaShort.replace(/\s+/g,'_') + '_' +
+    now.toISOString().split('T')[0] + '.pdf';
+  doc.save(filename);
+  showToast('✅ PDF berhasil diunduh!', 'success');
+}
+
+</script>
   <style>
     :root {
       --navy:     #1a1a2e;
@@ -574,6 +888,10 @@
       <p>Tracking Aktivitas Akademik TA/Skripsi</p>
     </div>
     <div class="periode-badge" id="periodeBadge">—</div>
+    <button id="btnExportPDF" onclick="exportPDF()"
+      style="display:none;padding:7px 13px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:8px">
+      📄 Export PDF
+    </button>
   </div>
 </header>
 
@@ -799,6 +1117,8 @@ function renderUI() {
   });
 
   document.getElementById('saveAllBar').classList.add('visible');
+  // Tampilkan tombol export PDF di header
+  document.getElementById('btnExportPDF').style.display = 'block';
 }
 
 function renderMhsCard(m, posisiCls) {
@@ -1248,6 +1568,162 @@ async function simpanMahasiswaBaru() {
     btn.disabled = false;
     btn.innerHTML = '➕ Tambahkan ke Daftar';
   }
+}
+
+
+// ============================================================
+// EXPORT PDF — LAPORAN DOSEN
+// ============================================================
+function exportPDF() {
+  const filled = mahasiswaList.filter(m => progressData[String(m.nim)]);
+  if (filled.length === 0) {
+    showToast('Belum ada data yang tersimpan!', 'error');
+    return;
+  }
+
+  showToast('⏳ Membuat PDF...', '');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const now = new Date();
+  const tglCetak = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  const namaShort = dosenNama.split(',')[0];
+
+  // ── HEADER ──
+  doc.setFillColor(26, 26, 46);
+  doc.rect(0, 0, 210, 38, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('TRACKA — Laporan Progress Bimbingan TA/Skripsi', 14, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Pekan TRACKA 22–27 Juni 2026  |  BIPA Magelang', 14, 21);
+  doc.text('Dicetak: ' + tglCetak, 14, 28);
+
+  // Accent bar
+  doc.setFillColor(233, 69, 96);
+  doc.rect(0, 38, 210, 2, 'F');
+
+  // ── INFO DOSEN ──
+  doc.setTextColor(26, 26, 46);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Dosen Pembimbing', 14, 48);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(dosenNama, 14, 55);
+
+  // ── SUMMARY CARDS ──
+  const cardData = [
+    { label: 'Total Mahasiswa', val: mahasiswaList.length },
+    { label: 'Sudah Dilaporkan', val: filled.length },
+    { label: 'Siap Maju Juli', val: Object.values(progressData).filter(p => p.kesanggupan === 'Siap Juli').length },
+    { label: 'Total Sesi', val: Object.keys(progressData).length },
+  ];
+  const cardW = 43, cardH = 18, cardY = 60;
+  cardData.forEach((c, i) => {
+    const x = 14 + i * (cardW + 2);
+    doc.setFillColor(240, 242, 245);
+    doc.roundedRect(x, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(26, 26, 46);
+    doc.text(String(c.val), x + cardW/2, cardY + 10, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(c.label, x + cardW/2, cardY + 15, { align: 'center' });
+  });
+
+  // ── TABEL PROGRESS TERBARU PER MAHASISWA ──
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Status Progress Mahasiswa', 14, 88);
+
+  // Pisah PB1 dan PB2
+  const pb1 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 1');
+  const pb2 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 2');
+  const allSorted = [...pb1, ...pb2];
+
+  const tableRows = allSorted.map((m, i) => {
+    const nim = String(m.nim);
+    const p = progressData[nim];
+    return [
+      i + 1,
+      m.nama,
+      m.nim,
+      m.posisi === 'Pembimbing 1' ? 'PB1' : 'PB2',
+      p ? (p.tglBimbingan || p.periode || '—') : '—',
+      p ? 'Ke-' + (p.bimbinganKe || '?') : '—',
+      p ? (p.topikBimbingan || '—') : '—',
+      p ? (p.statusProgress || '—') : 'Belum diisi',
+      p ? (p.kesanggupan || '—') : '—',
+      p ? (p.catatanDosen || '—') : '—',
+    ];
+  });
+
+  doc.autoTable({
+    startY: 91,
+    head: [['No','Nama','NIM','Pos','Tgl','Sesi','Topik','Status Progress','Kesanggupan','Catatan']],
+    body: tableRows,
+    styles: { fontSize: 7.5, cellPadding: 2.5, overflow: 'linebreak' },
+    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+    columnStyles: {
+      0: { cellWidth: 7 },
+      1: { cellWidth: 38 },
+      2: { cellWidth: 16 },
+      3: { cellWidth: 9 },
+      4: { cellWidth: 17 },
+      5: { cellWidth: 10 },
+      6: { cellWidth: 28 },
+      7: { cellWidth: 30 },
+      8: { cellWidth: 22 },
+      9: { cellWidth: 18 },
+    },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+    didParseCell: function(data) {
+      if (data.section === 'body') {
+        if (data.column.index === 8) {
+          const val = data.cell.raw;
+          if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
+          else if (val === 'Siap Agustus') data.cell.styles.textColor = [146, 64, 14];
+          else if (val === 'Belum diisi') data.cell.styles.textColor = [233, 69, 96];
+        }
+        if (data.column.index === 7 && data.cell.raw === 'Belum diisi') {
+          data.cell.styles.textColor = [233, 69, 96];
+        }
+      }
+    }
+  });
+
+  // ── TANDA TANGAN ──
+  const finalY = doc.lastAutoTable.finalY + 14;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Magelang, ' + tglCetak, 140, finalY);
+  doc.text('Dosen Pembimbing,', 140, finalY + 7);
+  doc.line(140, finalY + 28, 196, finalY + 28);
+  doc.setFont('helvetica', 'bold');
+  doc.text(namaShort, 140, finalY + 33);
+
+  // ── FOOTER ──
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7.5);
+    doc.setTextColor(180);
+    doc.text('TRACKA — Sistem Tracking Aktivitas Akademik TA/Skripsi | BIPA', 14, 290);
+    doc.text('Hal ' + i + '/' + pageCount, 196, 290, { align: 'right' });
+  }
+
+  const filename = 'TRACKA_Laporan_' + namaShort.replace(/\s+/g,'_') + '_' +
+    now.toISOString().split('T')[0] + '.pdf';
+  doc.save(filename);
+  showToast('✅ PDF berhasil diunduh!', 'success');
 }
 
 </script>
