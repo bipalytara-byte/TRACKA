@@ -790,6 +790,53 @@ function exportPDF() {
       .stat-item { padding: 8px 8px; }
     }
 
+    /* ── RIWAYAT TERAKHIR ── */
+    .riwayat-box {
+      margin-top: 14px;
+      padding: 11px 13px;
+      background: #f0fdf4;
+      border: 1px solid var(--green-lt);
+      border-radius: 8px;
+      margin-bottom: 2px;
+    }
+    .riwayat-box .riwayat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .riwayat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 12px;
+    }
+    .riwayat-item {
+      font-size: 11px;
+    }
+    .riwayat-item .r-key {
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .riwayat-item .r-val {
+      color: var(--navy);
+      font-weight: 600;
+    }
+    .sesi-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f3e8ff;
+      color: #6b21a8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    /* ── MODAL TAMBAH MAHASISWA ── */
     /* ── MODAL TAMBAH MAHASISWA ── */
     .modal-overlay {
       position: fixed;
@@ -954,7 +1001,8 @@ const KESANGGUPAN = [
 let dosenNama = '';
 let dosenToken = '';
 let mahasiswaList = [];
-let progressData = {};  // nim -> data yang sudah tersimpan
+let progressData = {};  // nim -> progress TERBARU per mahasiswa
+let historyData = {};   // nim -> array semua sesi
 let formData = {};      // nim -> data form saat ini
 let periode = '';
 
@@ -989,7 +1037,7 @@ async function loadData() {
     // Paralel: ambil mahasiswa + progress existing
     const [mhsRes, progRes] = await Promise.all([
       callGAS({ action: 'getMahasiswa', token: dosenToken }),
-      callGAS({ action: 'getProgress', token: dosenToken, periode: periode })
+      callGAS({ action: 'getProgress', token: dosenToken, periode: null })
     ]);
 
     if (mhsRes.status !== 'ok') throw new Error(mhsRes.message);
@@ -997,10 +1045,24 @@ async function loadData() {
     dosenNama = mhsRes.dosen;
     mahasiswaList = mhsRes.mahasiswa || [];
 
-    // Map progress existing by nim
+    // Ambil progress TERBARU per mahasiswa (dari semua periode)
+    // progressData[nim] = entri paling baru
     if (progRes.status === 'ok' && progRes.data) {
       progRes.data.forEach(p => {
-        progressData[String(p.nim)] = p;
+        const nim = String(p.nim);
+        if (!progressData[nim] || p.timestamp > progressData[nim].timestamp) {
+          progressData[nim] = p;
+        }
+      });
+    }
+    
+    // historyData[nim] = array semua sesi (untuk counter)
+    historyData = {};
+    if (progRes.status === 'ok' && progRes.data) {
+      progRes.data.forEach(p => {
+        const nim = String(p.nim);
+        if (!historyData[nim]) historyData[nim] = [];
+        historyData[nim].push(p);
       });
     }
 
@@ -1017,7 +1079,9 @@ function renderUI() {
   const main = document.getElementById('mainContent');
   
   const totalMhs = mahasiswaList.length;
-  const sudahDiisi = mahasiswaList.filter(m => progressData[String(m.nim)]).length;
+  // Sudah diisi = pernah ada sesi bimbingan minimal 1x
+  const sudahDiisi = mahasiswaList.filter(m => historyData[String(m.nim)] && historyData[String(m.nim)].length > 0).length;
+  const totalSesi = Object.values(historyData).reduce((s, arr) => s + arr.length, 0);
   const pct = totalMhs > 0 ? Math.round((sudahDiisi / totalMhs) * 100) : 0;
 
   // Pisah dosbing 1 dan 2
@@ -1035,11 +1099,15 @@ function renderUI() {
         </div>
         <div class="stat-item">
           <div class="num green">${sudahDiisi}</div>
-          <div class="lbl">Sudah Diisi</div>
+          <div class="lbl">Terlaporkan</div>
         </div>
         <div class="stat-item">
           <div class="num amber">${totalMhs - sudahDiisi}</div>
-          <div class="lbl">Belum Diisi</div>
+          <div class="lbl">Belum Ada Sesi</div>
+        </div>
+        <div class="stat-item">
+          <div class="num" style="color:var(--purple)">${totalSesi}</div>
+          <div class="lbl">Total Sesi</div>
         </div>
       </div>
       <div class="progress-bar-wrap">
@@ -1165,6 +1233,8 @@ function renderMhsCard(m, posisiCls) {
   const today = todayDate.toISOString().split('T')[0];
   const showLainnya = existing && existing.statusProgress === 'Lainnya' ? 'show' : '';
   const showKendalaLainnya = existing && existing.kendalaUtama === 'Lainnya' ? 'show' : '';
+  // Hitung total sesi mahasiswa ini
+  const sesiCount = historyData[nim] ? historyData[nim].length : 0;
 
   return `
     <div class="mhs-card ${isFilled ? 'filled' : ''}" id="card_${nim}">
@@ -1179,7 +1249,8 @@ function renderMhsCard(m, posisiCls) {
           </div>
           <div class="mhs-meta" style="margin-top:4px">
             ${statusPill}
-            ${isFilled ? `<span class="status-pill saved" style="background:#dbeafe;color:#1e40af">${existing.statusProgress}</span>` : ''}
+            ${existing ? `<span class="status-pill saved" style="background:#dbeafe;color:#1e40af">${existing.statusProgress}</span>` : ''}
+            ${sesiCount > 0 ? `<span class="sesi-count-badge">🔄 ${sesiCount}x sesi</span>` : ''}
           </div>
         </div>
         <span class="chevron">▼</span>
@@ -1187,6 +1258,37 @@ function renderMhsCard(m, posisiCls) {
 
       <div class="form-panel" id="panel_${nim}">
         ${judulHtml}
+
+        ${sesiCount > 0 && existing ? `
+        <div class="riwayat-box">
+          <div class="riwayat-label">📋 Sesi Terakhir (${existing.tglBimbingan || existing.periode || '—'}  •  Bimbingan ke-${existing.bimbinganKe || '?'})</div>
+          <div class="riwayat-grid">
+            <div class="riwayat-item">
+              <div class="r-key">Status Progress</div>
+              <div class="r-val">${existing.statusProgress || '—'}</div>
+            </div>
+            <div class="riwayat-item">
+              <div class="r-key">Kesanggupan</div>
+              <div class="r-val">${existing.kesanggupan || '—'}</div>
+            </div>
+            <div class="riwayat-item">
+              <div class="r-key">Topik</div>
+              <div class="r-val">${existing.topikBimbingan || '—'}</div>
+            </div>
+            <div class="riwayat-item">
+              <div class="r-key">Kendala</div>
+              <div class="r-val">${existing.kendalaUtama || '—'}</div>
+            </div>
+            ${existing.catatanDosen ? `<div class="riwayat-item" style="grid-column:1/-1">
+              <div class="r-key">Catatan</div>
+              <div class="r-val">${existing.catatanDosen}</div>
+            </div>` : ''}
+          </div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--muted);margin:6px 0 2px">
+          ↓ Isi form untuk sesi bimbingan baru ↓
+        </div>
+        ` : ''}
 
         ${judulEmpty ? `
         <div class="field-group">
@@ -1377,8 +1479,11 @@ async function saveSingle(nim, namaMahasiswa, prodi, posisi) {
     const res = await callGAS(payload);
     if (res.status !== 'ok') throw new Error(res.message);
 
-    // Update state
-    progressData[nim] = { ...payload, updatedAt: new Date().toLocaleString('id-ID') };
+    // Update state — progressData = terbaru, historyData = append
+    const savedEntry = { ...payload, updatedAt: new Date().toLocaleString('id-ID') };
+    progressData[nim] = savedEntry;
+    if (!historyData[nim]) historyData[nim] = [];
+    historyData[nim].push(savedEntry);
 
     // Update UI card
     const card = document.getElementById('card_' + nim);
@@ -1446,7 +1551,7 @@ async function saveAll() {
 // ============================================================
 function updateProgressBar() {
   const total = mahasiswaList.length;
-  const filled = mahasiswaList.filter(m => progressData[String(m.nim)]).length;
+  const filled = mahasiswaList.filter(m => historyData[String(m.nim)] && historyData[String(m.nim)].length > 0).length;
   const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
   const fill = document.getElementById('progressFill');
   const lbl = document.getElementById('pctLabel');
