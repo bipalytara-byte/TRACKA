@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRACKA — Laporan Progress TA/Skripsi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:     #1a1a2e;
+      --navy-mid: #16213e;
+      --blue:     #0f3460;
+      --accent:   #e94560;
+      --green:    #2d6a4f;
+      --green-lt: #52b788;
+      --amber:    #f4a261;
+      --bg:       #f0f2f5;
+      --card:     #ffffff;
+      --text:     #1a1a2e;
+      --muted:    #6b7280;
+      --border:   #e5e7eb;
+      --radius:   12px;
+      --shadow:   0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--navy);
+      padding: 20px 24px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+    }
+    .header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-logo {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      color: white;
+      font-size: 14px;
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+    }
+    .header-text p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      margin-top: 2px;
+    }
+    .periode-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    /* ── DOSEN CARD ── */
+    .dosen-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--accent);
+    }
+    .dosen-card .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .dosen-card .nama {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .dosen-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .stat-item {
+      text-align: center;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 8px 14px;
+      flex: 1;
+    }
+    .stat-item .num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+    .stat-item .num.green { color: var(--green); }
+    .stat-item .num.amber { color: var(--amber); }
+    .stat-item .lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar-wrap {
+      margin-top: 12px;
+    }
+    .progress-bar-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-lt), var(--green));
+      border-radius: 99px;
+      transition: width 0.6s ease;
+    }
+    .progress-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 24px 0 12px;
+    }
+    .section-header h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .badge-count {
+      background: var(--navy);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .posisi-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+    .posisi-tag.p1 { background: #dbeafe; color: #1e40af; }
+    .posisi-tag.p2 { background: #fce7f3; color: #9d174d; }
+
+    /* ── MAHASISWA CARD ── */
+    .mhs-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: box-shadow 0.2s;
+    }
+    .mhs-card.filled {
+      border-color: var(--green-lt);
+    }
+    .mhs-card.filled .mhs-header {
+      border-left: 4px solid var(--green-lt);
+    }
+    .mhs-header {
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      border-left: 4px solid transparent;
+      transition: background 0.15s;
+    }
+    .mhs-header:hover { background: #fafafa; }
+    .mhs-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .mhs-info { flex: 1; min-width: 0; }
+    .mhs-nama {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--navy);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mhs-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mhs-nim { font-weight: 500; }
+    .dot { color: var(--border); }
+
+    .status-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .status-pill.empty { background: #fef3c7; color: #92400e; }
+    .status-pill.saved { background: #d1fae5; color: #065f46; }
+
+    .chevron {
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .mhs-card.open .chevron { transform: rotate(180deg); }
+
+    /* ── FORM PANEL ── */
+    .form-panel {
+      display: none;
+      padding: 0 16px 16px;
+      border-top: 1px solid var(--border);
+      background: #fafbfc;
+    }
+    .mhs-card.open .form-panel { display: block; }
+
+    .judul-box {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: #fffbeb;
+      border: 1px dashed #f59e0b;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+    .judul-box .judul-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 4px;
+    }
+    .judul-box .judul-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .judul-box.empty-judul {
+      background: #fff7ed;
+      border-color: var(--accent);
+    }
+
+    .field-group {
+      margin-top: 14px;
+    }
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .field-label .req { color: var(--accent); }
+
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: white;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    select:focus, textarea:focus, input[type="text"]:focus {
+      border-color: var(--blue);
+    }
+    textarea { resize: vertical; min-height: 70px; }
+
+    .lainnya-field {
+      margin-top: 8px;
+      display: none;
+    }
+    .lainnya-field.show { display: block; }
+
+    /* ── STATUS CHIPS ── */
+    .chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: var(--text);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .chip:hover { border-color: var(--blue); color: var(--blue); }
+    .chip.selected {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+    }
+    .chip.chip-siap-juli.selected { background: var(--green); border-color: var(--green); }
+    .chip.chip-siap-agustus.selected { background: var(--amber); border-color: var(--amber); color: white; }
+    .chip.chip-belum.selected { background: #6b7280; border-color: #6b7280; }
+
+    /* ── SUBMIT BTN ── */
+    .btn-submit {
+      width: 100%;
+      margin-top: 16px;
+      padding: 13px;
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover { background: var(--blue); }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { background: var(--muted); cursor: not-allowed; }
+    .btn-submit.saving { background: var(--muted); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--navy);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      transition: transform 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--green); }
+    .toast.error { background: var(--accent); }
+
+    /* ── LOADING & ERROR ── */
+    .loading-wrap {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-wrap {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .error-wrap .icon { font-size: 48px; margin-bottom: 12px; }
+    .error-wrap h2 { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .error-wrap p { font-size: 14px; color: var(--muted); }
+
+    /* ── SAVE ALL BTN (sticky bottom) ── */
+    .save-all-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: none;
+      z-index: 50;
+    }
+    .save-all-bar.visible { display: block; }
+    .btn-save-all {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      padding: 14px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-save-all:hover { background: var(--green-lt); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .dosen-stats { gap: 8px; }
+      .stat-item { padding: 8px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-logo">TRK</div>
+    <div class="header-text">
+      <h1>TRACKA</h1>
+      <p>Tracking Aktivitas Akademik TA/Skripsi</p>
+    </div>
+    <div class="periode-badge" id="periodeBadge">—</div>
+  </div>
+</header>
+
+<main id="mainContent">
+  <div class="loading-wrap" id="loadingState">
+    <div class="spinner"></div>
+    <p>Memuat data mahasiswa...</p>
+  </div>
+</main>
+
+<div class="save-all-bar" id="saveAllBar">
+  <button class="btn-save-all" onclick="saveAll()">
+    💾 Simpan Semua Progress
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyqHVuNaL1Cr3tIL8gZTvguAsWgppcxc0ZqdhRjctS1mah_gP6xhupUyVYKSkKu3jqe7Q/exec';
+
+const STATUS_PROGRESS = [
+  'Uji Validasi Judul',
+  'ACC Validasi Judul',
+  'Mengerjakkan Bab 1 - 3',
+  'Proses Ganti Judul',
+  'Proses Mencari Judul',
+  'Mengerjakkan Instrumen Penelitian',
+  'Validasi Akhir/Praktisi',
+  'Mengerjakkan Bab 4 - 5',
+  'Mengerjakkan Jurnal',
+  'ACC Pendadaran',
+  'Sudah Pendadaran',
+  'Lainnya'
+];
+
+const KENDALA_OPTIONS = [
+  'Tidak Ada Kendala',
+  'Kesulitan Teknis Penulisan',
+  'Data/Objek Penelitian Belum Lengkap',
+  'Sulit Ditemui / Jadwal Bentrok',
+  'Masalah Pribadi/Kesehatan',
+  'Revisi Berulang dari Pembimbing',
+  'Belum Mulai Mengerjakan',
+  'Lainnya'
+];
+
+const KESANGGUPAN = [
+  { label: '✅ Siap Juli', value: 'Siap Juli', cls: 'chip-siap-juli' },
+  { label: '📅 Siap Agustus', value: 'Siap Agustus', cls: 'chip-siap-agustus' },
+  { label: '❓ Belum Bisa Diprediksi', value: 'Belum Bisa Diprediksi', cls: 'chip-belum' }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let dosenNama = '';
+let dosenToken = '';
+let mahasiswaList = [];
+let progressData = {};  // nim -> data yang sudah tersimpan
+let formData = {};      // nim -> data form saat ini
+let periode = '';
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  dosenToken = params.get('token') || '';
+  
+  // Set periode hari ini
+  const now = new Date();
+  periode = now.toISOString().split('T')[0]; // yyyy-mm-dd
+  const periodeLabel = now.toLocaleDateString('id-ID', { 
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+  });
+  document.getElementById('periodeBadge').textContent = periodeLabel;
+
+  if (!dosenToken) {
+    showError('Token tidak ditemukan', 'Pastikan kamu menggunakan link yang benar dari koordinator.');
+    return;
+  }
+
+  loadData();
+});
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+async function loadData() {
+  try {
+    // Paralel: ambil mahasiswa + progress existing
+    const [mhsRes, progRes] = await Promise.all([
+      callGAS({ action: 'getMahasiswa', token: dosenToken }),
+      callGAS({ action: 'getProgress', token: dosenToken, periode: periode })
+    ]);
+
+    if (mhsRes.status !== 'ok') throw new Error(mhsRes.message);
+    
+    dosenNama = mhsRes.dosen;
+    mahasiswaList = mhsRes.mahasiswa || [];
+
+    // Map progress existing by nim
+    if (progRes.status === 'ok' && progRes.data) {
+      progRes.data.forEach(p => {
+        progressData[String(p.nim)] = p;
+      });
+    }
+
+    renderUI();
+  } catch(err) {
+    showError('Gagal memuat data', err.message || 'Periksa koneksi internet kamu.');
+  }
+}
+
+// ============================================================
+// RENDER UI
+// ============================================================
+function renderUI() {
+  const main = document.getElementById('mainContent');
+  
+  const totalMhs = mahasiswaList.length;
+  const sudahDiisi = mahasiswaList.filter(m => progressData[String(m.nim)]).length;
+  const pct = totalMhs > 0 ? Math.round((sudahDiisi / totalMhs) * 100) : 0;
+
+  // Pisah dosbing 1 dan 2
+  const pb1List = mahasiswaList.filter(m => m.posisi === 'Pembimbing 1');
+  const pb2List = mahasiswaList.filter(m => m.posisi === 'Pembimbing 2');
+
+  let html = `
+    <div class="dosen-card">
+      <div class="label">Dosen Pembimbing</div>
+      <div class="nama">${dosenNama}</div>
+      <div class="dosen-stats">
+        <div class="stat-item">
+          <div class="num">${totalMhs}</div>
+          <div class="lbl">Total Mahasiswa</div>
+        </div>
+        <div class="stat-item">
+          <div class="num green">${sudahDiisi}</div>
+          <div class="lbl">Sudah Diisi</div>
+        </div>
+        <div class="stat-item">
+          <div class="num amber">${totalMhs - sudahDiisi}</div>
+          <div class="lbl">Belum Diisi</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill" style="width:${pct}%"></div>
+        </div>
+        <div class="progress-bar-label">
+          <span>Progress pengisian</span>
+          <span id="pctLabel">${pct}%</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (pb1List.length > 0) {
+    html += `
+      <div class="section-header">
+        <h2>Pembimbing 1</h2>
+        <span class="badge-count">${pb1List.length}</span>
+      </div>
+    `;
+    pb1List.forEach(m => { html += renderMhsCard(m, 'p1'); });
+  }
+
+  if (pb2List.length > 0) {
+    html += `
+      <div class="section-header">
+        <h2>Pembimbing 2</h2>
+        <span class="badge-count">${pb2List.length}</span>
+      </div>
+    `;
+    pb2List.forEach(m => { html += renderMhsCard(m, 'p2'); });
+  }
+
+  main.innerHTML = html;
+
+  // Init form state dari progress existing
+  mahasiswaList.forEach(m => {
+    const existing = progressData[String(m.nim)];
+    if (existing) {
+      formData[String(m.nim)] = {
+        statusProgress: existing.statusProgress || '',
+        progressDetail: existing.progressDetail || '',
+        kendalaUtama: existing.kendalaUtama || '',
+        kendalaDetail: existing.kendalaDetail || '',
+        kesanggupan: existing.kesanggupan || '',
+        catatanDosen: existing.catatanDosen || '',
+        judulBaru: ''
+      };
+      // Pre-fill form elements
+      prefillForm(m.nim, existing);
+    } else {
+      formData[String(m.nim)] = {
+        statusProgress: '', progressDetail: '',
+        kendalaUtama: '', kendalaDetail: '',
+        kesanggupan: '', catatanDosen: '', judulBaru: ''
+      };
+    }
+  });
+
+  document.getElementById('saveAllBar').classList.add('visible');
+}
+
+function renderMhsCard(m, posisiCls) {
+  const nim = String(m.nim);
+  const existing = progressData[nim];
+  const isFilled = !!existing;
+  const initials = m.nama.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const judulEmpty = !m.judul || m.judul.trim() === '';
+
+  const statusPill = isFilled
+    ? `<span class="status-pill saved">✓ Tersimpan</span>`
+    : `<span class="status-pill empty">Belum diisi</span>`;
+
+  const judulHtml = judulEmpty
+    ? `<div class="judul-box empty-judul" id="judulBox_${nim}">
+        <div class="judul-label">⚠️ Judul belum ada — isi di bawah</div>
+       </div>`
+    : `<div class="judul-box" id="judulBox_${nim}">
+        <div class="judul-label">Judul TA/Skripsi</div>
+        <div class="judul-text">${m.judul}</div>
+       </div>`;
+
+  // Build status progress options
+  const statusOpts = STATUS_PROGRESS.map(s =>
+    `<option value="${s}" ${existing && existing.statusProgress === s ? 'selected' : ''}>${s}</option>`
+  ).join('');
+
+  // Build kendala options
+  const kendalaOpts = KENDALA_OPTIONS.map(k =>
+    `<option value="${k}" ${existing && existing.kendalaUtama === k ? 'selected' : ''}>${k}</option>`
+  ).join('');
+
+  // Build kesanggupan chips
+  const kesanggupanChips = KESANGGUPAN.map(k =>
+    `<div class="chip ${k.cls} ${existing && existing.kesanggupan === k.value ? 'selected' : ''}"
+      onclick="selectChip(this, '${nim}', 'kesanggupan', '${k.value}')">${k.label}</div>`
+  ).join('');
+
+  const existingDetail = existing ? (existing.progressDetail || '') : '';
+  const showLainnya = existing && existing.statusProgress === 'Lainnya' ? 'show' : '';
+  const showKendalaLainnya = existing && existing.kendalaUtama === 'Lainnya' ? 'show' : '';
+
+  return `
+    <div class="mhs-card ${isFilled ? 'filled' : ''}" id="card_${nim}">
+      <div class="mhs-header" onclick="toggleCard('${nim}')">
+        <div class="mhs-avatar">${initials}</div>
+        <div class="mhs-info">
+          <div class="mhs-nama">${m.nama}</div>
+          <div class="mhs-meta">
+            <span class="mhs-nim">${m.nim}</span>
+            <span class="dot">·</span>
+            <span>${m.prodi}</span>
+          </div>
+          <div class="mhs-meta" style="margin-top:4px">
+            ${statusPill}
+            ${isFilled ? `<span class="status-pill saved" style="background:#dbeafe;color:#1e40af">${existing.statusProgress}</span>` : ''}
+          </div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+
+      <div class="form-panel" id="panel_${nim}">
+        ${judulHtml}
+
+        ${judulEmpty ? `
+        <div class="field-group">
+          <div class="field-label">📝 Isi Judul TA/Skripsi <span class="req">*</span></div>
+          <textarea id="judulInput_${nim}" placeholder="Tulis judul lengkap mahasiswa..." rows="2"
+            oninput="updateField('${nim}', 'judulBaru', this.value)">${existing && existing.judul ? existing.judul : ''}</textarea>
+        </div>
+        ` : ''}
+
+        <div class="field-group">
+          <div class="field-label">📊 Status Progress <span class="req">*</span></div>
+          <select id="statusProgress_${nim}"
+            onchange="updateField('${nim}','statusProgress',this.value); toggleLainnya('${nim}', this.value)">
+            <option value="">— Pilih status —</option>
+            ${statusOpts}
+          </select>
+          <div class="lainnya-field ${showLainnya}" id="lainnyaProgress_${nim}">
+            <input type="text" id="progressDetail_${nim}"
+              placeholder="Jelaskan progress secara singkat..."
+              value="${existingDetail}"
+              oninput="updateField('${nim}','progressDetail',this.value)" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">⚠️ Kendala Utama <span class="req">*</span></div>
+          <select id="kendalaUtama_${nim}"
+            onchange="updateField('${nim}','kendalaUtama',this.value); toggleKendalaLainnya('${nim}', this.value)">
+            <option value="">— Pilih kendala —</option>
+            ${kendalaOpts}
+          </select>
+          <div class="lainnya-field ${showKendalaLainnya}" id="lainnyaKendala_${nim}">
+            <input type="text" id="kendalaDetail_${nim}"
+              placeholder="Jelaskan kendala secara singkat..."
+              value="${existing ? (existing.kendalaDetail || '') : ''}"
+              oninput="updateField('${nim}','kendalaDetail',this.value)" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">🎯 Kesanggupan Pendadaran <span class="req">*</span></div>
+          <div class="chips-wrap" id="kesanggupan_${nim}">
+            ${kesanggupanChips}
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">💬 Catatan Dosen <span style="color:var(--muted);font-weight:400">(opsional)</span></div>
+          <textarea id="catatanDosen_${nim}" placeholder="Catatan khusus, kondisi mahasiswa, dll..."
+            oninput="updateField('${nim}','catatanDosen',this.value)">${existing ? (existing.catatanDosen || '') : ''}</textarea>
+        </div>
+
+        <button class="btn-submit" id="btnSave_${nim}" onclick="saveSingle('${nim}', '${m.nama}', '${m.prodi}', '${m.posisi}')">
+          💾 Simpan Progress
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function toggleCard(nim) {
+  const card = document.getElementById('card_' + nim);
+  card.classList.toggle('open');
+}
+
+function updateField(nim, field, value) {
+  if (!formData[nim]) formData[nim] = {};
+  formData[nim][field] = value;
+}
+
+function selectChip(el, nim, field, value) {
+  const wrap = document.getElementById(field + '_' + nim);
+  wrap.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  updateField(nim, field, value);
+}
+
+function toggleLainnya(nim, value) {
+  const el = document.getElementById('lainnyaProgress_' + nim);
+  if (el) el.classList.toggle('show', value === 'Lainnya');
+}
+
+function toggleKendalaLainnya(nim, value) {
+  const el = document.getElementById('lainnyaKendala_' + nim);
+  if (el) el.classList.toggle('show', value === 'Lainnya');
+}
+
+function prefillForm(nim, data) {
+  // dipanggil setelah render, element sudah ada di DOM
+  setTimeout(() => {
+    const spEl = document.getElementById('statusProgress_' + nim);
+    const kuEl = document.getElementById('kendalaUtama_' + nim);
+    if (spEl && data.statusProgress) {
+      spEl.value = data.statusProgress;
+      toggleLainnya(nim, data.statusProgress);
+    }
+    if (kuEl && data.kendalaUtama) {
+      kuEl.value = data.kendalaUtama;
+      toggleKendalaLainnya(nim, data.kendalaUtama);
+    }
+  }, 50);
+}
+
+// ============================================================
+// SAVE SINGLE
+// ============================================================
+async function saveSingle(nim, namaMahasiswa, prodi, posisi) {
+  const fd = formData[nim] || {};
+
+  // Validasi
+  if (!fd.statusProgress) return showToast('Pilih status progress dulu!', 'error');
+  if (!fd.kendalaUtama) return showToast('Pilih kendala utama dulu!', 'error');
+  if (!fd.kesanggupan) return showToast('Pilih kesanggupan pendadaran dulu!', 'error');
+
+  const btn = document.getElementById('btnSave_' + nim);
+  btn.disabled = true;
+  btn.classList.add('saving');
+  btn.innerHTML = '⏳ Menyimpan...';
+
+  try {
+    const payload = {
+      action: 'saveProgress',
+      token: dosenToken,
+      dosenNama: dosenNama,
+      nim: nim,
+      namaMahasiswa: namaMahasiswa,
+      prodi: prodi,
+      posisi: posisi,
+      periode: periode,
+      statusProgress: fd.statusProgress,
+      progressDetail: fd.progressDetail || '',
+      kendalaUtama: fd.kendalaUtama,
+      kendalaDetail: fd.kendalaDetail || '',
+      kesanggupan: fd.kesanggupan,
+      catatanDosen: fd.catatanDosen || ''
+    };
+
+    // Kalau ada judul baru
+    if (fd.judulBaru && fd.judulBaru.trim()) {
+      await callGAS({
+        action: 'updateJudul',
+        token: dosenToken,
+        nim: nim,
+        judul: fd.judulBaru.trim()
+      });
+    }
+
+    const res = await callGAS(payload);
+    if (res.status !== 'ok') throw new Error(res.message);
+
+    // Update state
+    progressData[nim] = { ...payload, updatedAt: new Date().toLocaleString('id-ID') };
+
+    // Update UI card
+    const card = document.getElementById('card_' + nim);
+    card.classList.add('filled');
+    card.querySelector('.mhs-header').style.borderLeftColor = 'var(--green-lt)';
+
+    // Update status pill
+    const metaDiv = card.querySelectorAll('.mhs-meta')[1];
+    if (metaDiv) {
+      metaDiv.innerHTML = `
+        <span class="status-pill saved">✓ Tersimpan</span>
+        <span class="status-pill saved" style="background:#dbeafe;color:#1e40af">${fd.statusProgress}</span>
+      `;
+    }
+
+    updateProgressBar();
+    showToast('✅ Progress ' + namaMahasiswa.split(' ')[0] + ' tersimpan!', 'success');
+
+    // Tutup card
+    setTimeout(() => {
+      card.classList.remove('open');
+    }, 800);
+
+  } catch(err) {
+    showToast('Gagal menyimpan: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('saving');
+    btn.innerHTML = '💾 Simpan Progress';
+  }
+}
+
+// ============================================================
+// SAVE ALL
+// ============================================================
+async function saveAll() {
+  const unfilledList = mahasiswaList.filter(m => !progressData[String(m.nim)]);
+  
+  if (unfilledList.length === 0) {
+    showToast('Semua mahasiswa sudah tersimpan! 🎉', 'success');
+    return;
+  }
+
+  // Buka semua card yang belum diisi
+  unfilledList.forEach(m => {
+    const card = document.getElementById('card_' + m.nim);
+    if (card && !card.classList.contains('open')) {
+      card.classList.add('open');
+    }
+  });
+
+  showToast(`${unfilledList.length} mahasiswa belum diisi — lengkapi dulu ya!`, 'error');
+  
+  // Scroll ke yang pertama belum diisi
+  if (unfilledList.length > 0) {
+    const firstCard = document.getElementById('card_' + unfilledList[0].nim);
+    if (firstCard) firstCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ============================================================
+// UPDATE PROGRESS BAR
+// ============================================================
+function updateProgressBar() {
+  const total = mahasiswaList.length;
+  const filled = mahasiswaList.filter(m => progressData[String(m.nim)]).length;
+  const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+  const fill = document.getElementById('progressFill');
+  const lbl = document.getElementById('pctLabel');
+  if (fill) fill.style.width = pct + '%';
+  if (lbl) lbl.textContent = pct + '%';
+
+  // Update stat cards
+  const statNums = document.querySelectorAll('.stat-item .num');
+  if (statNums[1]) statNums[1].textContent = filled;
+  if (statNums[2]) statNums[2].textContent = total - filled;
+}
+
+// ============================================================
+// GAS API CALL
+// ============================================================
+async function callGAS(payload) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+function showError(title, msg) {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="error-wrap">
+      <div class="icon">🔒</div>
+      <h2>${title}</h2>
+      <p>${msg}</p>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
