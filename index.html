@@ -788,6 +788,9 @@ function renderUI() {
       prefillForm(m.nim, existing);
     } else {
       formData[String(m.nim)] = {
+        tglBimbingan: new Date().toISOString().split('T')[0],
+        bimbinganKe: '',
+        topikBimbingan: '',
         statusProgress: '', progressDetail: '',
         kendalaUtama: '', kendalaDetail: '',
         kesanggupan: '', catatanDosen: '', judulBaru: ''
@@ -835,6 +838,11 @@ function renderMhsCard(m, posisiCls) {
   ).join('');
 
   const existingDetail = existing ? (existing.progressDetail || '') : '';
+  const existingTopik = existing ? (existing.topikBimbingan || '') : '';
+  const existingKe = existing ? (existing.bimbinganKe || '') : '';
+  // Tanggal hari ini format yyyy-mm-dd
+  const todayDate = new Date();
+  const today = todayDate.toISOString().split('T')[0];
   const showLainnya = existing && existing.statusProgress === 'Lainnya' ? 'show' : '';
   const showKendalaLainnya = existing && existing.kendalaUtama === 'Lainnya' ? 'show' : '';
 
@@ -867,6 +875,32 @@ function renderMhsCard(m, posisiCls) {
             oninput="updateField('${nim}', 'judulBaru', this.value)">${existing && existing.judul ? existing.judul : ''}</textarea>
         </div>
         ` : ''}
+
+        <div class="field-group" style="display:flex;gap:10px">
+          <div style="flex:1">
+            <div class="field-label">📅 Tanggal Bimbingan <span class="req">*</span></div>
+            <input type="date" id="tglBimbingan_${nim}"
+              value="${today}"
+              oninput="updateField('${nim}','tglBimbingan',this.value)"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none" />
+          </div>
+          <div style="flex:1">
+            <div class="field-label">🔢 Bimbingan Ke-</div>
+            <input type="number" id="bimbinganKe_${nim}" min="1"
+              value="${existingKe}"
+              oninput="updateField('${nim}','bimbinganKe',this.value)"
+              placeholder="Auto"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">💡 Topik Bimbingan <span class="req">*</span></div>
+          <input type="text" id="topikBimbingan_${nim}"
+            placeholder="Contoh: Review Bab 3, Perbaikan metodologi..."
+            value="${existingTopik}"
+            oninput="updateField('${nim}','topikBimbingan',this.value)" />
+        </div>
 
         <div class="field-group">
           <div class="field-label">📊 Status Progress <span class="req">*</span></div>
@@ -954,6 +988,9 @@ function prefillForm(nim, data) {
   setTimeout(() => {
     const spEl = document.getElementById('statusProgress_' + nim);
     const kuEl = document.getElementById('kendalaUtama_' + nim);
+    const tglEl = document.getElementById('tglBimbingan_' + nim);
+    const topikEl = document.getElementById('topikBimbingan_' + nim);
+    const keEl = document.getElementById('bimbinganKe_' + nim);
     if (spEl && data.statusProgress) {
       spEl.value = data.statusProgress;
       toggleLainnya(nim, data.statusProgress);
@@ -962,6 +999,9 @@ function prefillForm(nim, data) {
       kuEl.value = data.kendalaUtama;
       toggleKendalaLainnya(nim, data.kendalaUtama);
     }
+    if (tglEl) tglEl.value = new Date().toISOString().split('T')[0];
+    if (topikEl && data.topikBimbingan) topikEl.value = data.topikBimbingan;
+    if (keEl && data.bimbinganKe) keEl.value = data.bimbinganKe;
   }, 50);
 }
 
@@ -972,6 +1012,8 @@ async function saveSingle(nim, namaMahasiswa, prodi, posisi) {
   const fd = formData[nim] || {};
 
   // Validasi
+  if (!fd.tglBimbingan) return showToast('Isi tanggal bimbingan dulu!', 'error');
+  if (!fd.topikBimbingan) return showToast('Isi topik bimbingan dulu!', 'error');
   if (!fd.statusProgress) return showToast('Pilih status progress dulu!', 'error');
   if (!fd.kendalaUtama) return showToast('Pilih kendala utama dulu!', 'error');
   if (!fd.kesanggupan) return showToast('Pilih kesanggupan pendadaran dulu!', 'error');
@@ -991,6 +1033,9 @@ async function saveSingle(nim, namaMahasiswa, prodi, posisi) {
       prodi: prodi,
       posisi: posisi,
       periode: periode,
+      tglBimbingan: fd.tglBimbingan || periode,
+      bimbinganKe: fd.bimbinganKe || '',
+      topikBimbingan: fd.topikBimbingan || '',
       statusProgress: fd.statusProgress,
       progressDetail: fd.progressDetail || '',
       kendalaUtama: fd.kendalaUtama,
@@ -1023,9 +1068,11 @@ async function saveSingle(nim, namaMahasiswa, prodi, posisi) {
     // Update status pill
     const metaDiv = card.querySelectorAll('.mhs-meta')[1];
     if (metaDiv) {
+      const keLabel = fd.bimbinganKe ? ' #' + fd.bimbinganKe : '';
       metaDiv.innerHTML = `
         <span class="status-pill saved">✓ Tersimpan</span>
         <span class="status-pill saved" style="background:#dbeafe;color:#1e40af">${fd.statusProgress}</span>
+        <span class="status-pill saved" style="background:#f3e8ff;color:#6b21a8">Bimbingan${keLabel}</span>
       `;
     }
 
