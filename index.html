@@ -1365,7 +1365,12 @@ function renderMhsCard(m, posisiCls) {
             oninput="updateField('${nim}','catatanDosen',this.value)">${existing ? (existing.catatanDosen || '') : ''}</textarea>
         </div>
 
-        <button class="btn-submit" id="btnSave_${nim}" onclick="saveSingle('${nim}', '${m.nama}', '${m.prodi}', '${m.posisi}')">
+        <button class="btn-submit" id="btnSave_${nim}"
+          data-nim="${nim}"
+          data-nama="${m.nama.replace(/'/g, "\'").replace(/"/g, '&quot;')}"
+          data-prodi="${m.prodi}"
+          data-posisi="${m.posisi}"
+          onclick="saveSingleBtn(this)">
           💾 Simpan Progress
         </button>
       </div>
@@ -1423,6 +1428,16 @@ function prefillForm(nim, data) {
     if (topikEl && data.topikBimbingan) topikEl.value = data.topikBimbingan;
     if (keEl && data.bimbinganKe) keEl.value = data.bimbinganKe;
   }, 50);
+}
+
+
+// Wrapper aman untuk tombol simpan — hindari masalah karakter spesial di nama
+function saveSingleBtn(btn) {
+  const nim    = btn.dataset.nim;
+  const nama   = btn.dataset.nama;
+  const prodi  = btn.dataset.prodi;
+  const posisi = btn.dataset.posisi;
+  saveSingle(nim, nama, prodi, posisi);
 }
 
 // ============================================================
