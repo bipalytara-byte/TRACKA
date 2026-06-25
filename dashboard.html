@@ -184,6 +184,20 @@ let allMasterData = [];   // semua mahasiswa dari DATA_MAHASISWA
 let allProgressData = []; // semua progress dari PROGRESS
 let dosenSummary = [];    // summary per dosen
 
+// Helper: parse timestamp format 'dd/MM/yyyy HH:mm:ss' (dari GAS Utilities.formatDate)
+// menjadi objek Date yang valid. new Date() bawaan JS TIDAK BISA membaca format
+// dd/MM/yyyy (akan jadi Invalid Date atau salah tafsir jadi MM/dd/yyyy).
+function parseTimestamp(str) {
+  if (!str) return null;
+  const parts = String(str).trim().split(' ');
+  const datePart = parts[0]; // dd/MM/yyyy
+  const timePart = parts[1] || '00:00:00'; // HH:mm:ss
+  const [day, month, year] = datePart.split('/').map(Number);
+  const [hh, mm, ss] = timePart.split(':').map(Number);
+  if (!day || !month || !year) return null;
+  return new Date(year, month - 1, day, hh || 0, mm || 0, ss || 0);
+}
+
 // ============================================================
 // LOGIN
 // ============================================================
@@ -211,23 +225,6 @@ async function loadDashboard() {
       callGAS({ action: 'getAllMaster' }),
       callGAS({ action: 'getAllProgress' })
     ]);
-
-    // ── DEBUG SEMENTARA — hapus blok ini setelah masalah ditemukan ──
-    console.log('masterRes:', masterRes);
-    console.log('progressRes:', progressRes);
-    if (masterRes.status !== 'ok' || progressRes.status !== 'ok') {
-      document.getElementById('dashContent').innerHTML = `
-        <div class="loading-wrap">
-          <p>⚠️ DEBUG — respons GAS tidak 'ok':</p>
-          <pre style="text-align:left;background:#f3f4f6;padding:12px;border-radius:8px;max-width:700px;margin:12px auto;overflow:auto;font-size:11px">
-masterRes: ${JSON.stringify(masterRes, null, 2)}
-
-progressRes: ${JSON.stringify(progressRes, null, 2)}
-          </pre>
-        </div>`;
-      return;
-    }
-    // ── END DEBUG ──
 
     allMasterData   = masterRes.status === 'ok' ? masterRes.data : [];
     allProgressData = progressRes.status === 'ok' ? progressRes.data : [];
@@ -267,11 +264,13 @@ function buildSummary() {
     const nimDiisi = [...new Set(progDosen.map(p => String(p.nim)))];
     const sudahDiisi = nimDiisi.length;
 
-    // Ambil progress terbaru per mahasiswa
+    // Ambil progress terbaru per mahasiswa (pakai parseTimestamp, bukan perbandingan string)
     const latestPerNim = {};
     progDosen.forEach(p => {
       const nim = String(p.nim);
-      if (!latestPerNim[nim] || p.timestamp > latestPerNim[nim].timestamp) {
+      const pTime = parseTimestamp(p.timestamp);
+      const existingTime = latestPerNim[nim] ? parseTimestamp(latestPerNim[nim].timestamp) : null;
+      if (!latestPerNim[nim] || (pTime && existingTime && pTime > existingTime)) {
         latestPerNim[nim] = p;
       }
     });
@@ -283,10 +282,14 @@ function buildSummary() {
     // Total sesi bimbingan
     const totalSesi = progDosen.length;
 
-    // Timestamp terakhir
-    const lastActivity = progDosen.length > 0
-      ? progDosen.reduce((a, b) => a.timestamp > b.timestamp ? a : b).timestamp
-      : null;
+    // Timestamp terakhir (pakai objek Date asli, bukan string timestamp)
+    let lastActivity = null;
+    progDosen.forEach(p => {
+      const t = parseTimestamp(p.timestamp);
+      if (t && (!lastActivity || t > lastActivity)) {
+        lastActivity = t;
+      }
+    });
 
     const pct = totalMhs > 0 ? Math.round((sudahDiisi / totalMhs) * 100) : 0;
 
@@ -358,7 +361,7 @@ function renderDashboard() {
   dosenSummary.forEach((d, idx) => {
     const dotClass = d.pct === 100 ? 'dot-green' : d.pct > 0 ? 'dot-amber' : 'dot-red';
     const lastActive = d.lastActivity
-      ? new Date(d.lastActivity).toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+      ? d.lastActivity.toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
       : '<span style="color:var(--accent)">Belum ada aktivitas</span>';
     const namaShort = d.nama.split(',')[0];
 
@@ -444,7 +447,9 @@ function renderDetailDosen(idx, container) {
       : '—';
 
     const lastDate = latest
-      ? new Date(latest.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short'})
+      ? (parseTimestamp(latest.timestamp)
+          ? parseTimestamp(latest.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short'})
+          : '—')
       : '—';
 
     html += `<tr>
