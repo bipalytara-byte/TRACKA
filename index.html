@@ -1004,6 +1004,16 @@ let historyData = {};   // nim -> array semua sesi
 let formData = {};      // nim -> data form saat ini
 let periode = '';
 
+// Helper: tanggal hari ini dalam format yyyy-mm-dd, berdasarkan zona waktu LOKAL
+// (toISOString() mengonversi ke UTC, yang bisa salah tanggal antara jam 00:00-06:59 WIB)
+function getTodayLocal() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 // ============================================================
 // INIT
 // ============================================================
@@ -1012,8 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
   dosenToken = params.get('token') || '';
   
   // Set periode hari ini
-  const now = new Date();
-  periode = now.toISOString().split('T')[0]; // yyyy-mm-dd
+  periode = getTodayLocal(); // yyyy-mm-dd
   const periodeLabel = now.toLocaleDateString('id-ID', { 
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
   });
@@ -1160,6 +1169,7 @@ function renderUI() {
     const existing = progressData[String(m.nim)];
     if (existing) {
       formData[String(m.nim)] = {
+        tglBimbingan: getTodayLocal(), // selalu default ke hari ini untuk sesi baru
         statusProgress: existing.statusProgress || '',
         progressDetail: existing.progressDetail || '',
         kendalaUtama: existing.kendalaUtama || '',
@@ -1172,7 +1182,7 @@ function renderUI() {
       prefillForm(m.nim, existing);
     } else {
       formData[String(m.nim)] = {
-        tglBimbingan: new Date().toISOString().split('T')[0],
+        tglBimbingan: getTodayLocal(),
         bimbinganKe: '',
         topikBimbingan: '',
         statusProgress: '', progressDetail: '',
@@ -1226,9 +1236,13 @@ function renderMhsCard(m, posisiCls) {
   const existingDetail = existing ? (existing.progressDetail || '') : '';
   const existingTopik = existing ? (existing.topikBimbingan || '') : '';
   const existingKe = existing ? (existing.bimbinganKe || '') : '';
-  // Tanggal hari ini format yyyy-mm-dd
-  const todayDate = new Date();
-  const today = todayDate.toISOString().split('T')[0];
+  // Tanggal hari ini format yyyy-mm-dd (zona waktu lokal, bukan UTC)
+  const today = getTodayLocal();
+  // PENTING: isi formData juga, bukan cuma value HTML — kalau dosen tidak pernah
+  // menyentuh field tanggal, formData[nim].tglBimbingan harus tetap terisi default
+  // hari ini, supaya validasi saveSingle() tidak salah mendeteksi "belum diisi".
+  if (!formData[nim]) formData[nim] = {};
+  if (!formData[nim].tglBimbingan) formData[nim].tglBimbingan = today;
   const showLainnya = existing && existing.statusProgress === 'Lainnya' ? 'show' : '';
   const showKendalaLainnya = existing && existing.kendalaUtama === 'Lainnya' ? 'show' : '';
   // Hitung total sesi mahasiswa ini
@@ -1424,7 +1438,11 @@ function prefillForm(nim, data) {
       kuEl.value = data.kendalaUtama;
       toggleKendalaLainnya(nim, data.kendalaUtama);
     }
-    if (tglEl) tglEl.value = new Date().toISOString().split('T')[0];
+    if (tglEl) {
+      const todayLocal = getTodayLocal();
+      tglEl.value = todayLocal;
+      updateField(nim, 'tglBimbingan', todayLocal); // jangan cuma ubah tampilan, formData ikut diisi
+    }
     if (topikEl && data.topikBimbingan) topikEl.value = data.topikBimbingan;
     if (keEl && data.bimbinganKe) keEl.value = data.bimbinganKe;
   }, 50);
