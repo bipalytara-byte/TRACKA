@@ -1023,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Set periode hari ini
   periode = getTodayLocal(); // yyyy-mm-dd
-  const periodeLabel = now.toLocaleDateString('id-ID', { 
+  const periodeLabel = new Date().toLocaleDateString('id-ID', { 
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
   });
   document.getElementById('periodeBadge').textContent = periodeLabel;
