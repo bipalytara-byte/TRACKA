@@ -1022,8 +1022,9 @@ document.addEventListener('DOMContentLoaded', () => {
   dosenToken = params.get('token') || '';
   
   // Set periode hari ini
+  const now = new Date();
   periode = getTodayLocal(); // yyyy-mm-dd
-  const periodeLabel = new Date().toLocaleDateString('id-ID', { 
+  const periodeLabel = now.toLocaleDateString('id-ID', { 
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
   });
   document.getElementById('periodeBadge').textContent = periodeLabel;
@@ -1214,7 +1215,23 @@ function renderMhsCard(m, posisiCls) {
        </div>`
     : `<div class="judul-box" id="judulBox_${nim}">
         <div class="judul-label">Judul TA/Skripsi</div>
-        <div class="judul-text">${m.judul}</div>
+        <div class="judul-text" id="judulText_${nim}">${m.judul}</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button type="button" class="btn-edit-judul" onclick="toggleEditJudul('${nim}')"
+            style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer">✏️ Edit Judul</button>
+          <button type="button" class="btn-riwayat-judul" onclick="lihatRiwayatJudul('${nim}')"
+            style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer">📜 Riwayat</button>
+        </div>
+        <div id="editJudulBox_${nim}" style="display:none;margin-top:10px">
+          <textarea id="judulEditInput_${nim}" rows="2"
+            placeholder="Tulis judul baru (judul sebelumnya akan tercatat di riwayat)..."
+            style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none"
+            oninput="updateField('${nim}', 'judulBaru', this.value)">${m.judul}</textarea>
+          <div style="margin-top:6px;font-size:11px;color:var(--muted)">
+            ℹ️ Perubahan tersimpan saat Anda klik "Simpan" di bawah. Tidak otomatis dilaporkan ke BAAK.
+          </div>
+        </div>
+        <div id="riwayatJudulBox_${nim}" style="display:none;margin-top:10px;font-size:12px"></div>
        </div>`;
 
   // Build status progress options
@@ -1387,6 +1404,12 @@ function renderMhsCard(m, posisiCls) {
           onclick="saveSingleBtn(this)">
           💾 Simpan Progress
         </button>
+        <button type="button" class="btn-hapus-bimbingan" data-nim="${nim}"
+          data-nama="${m.nama.replace(/'/g, "\'").replace(/"/g, '&quot;')}"
+          onclick="hapusDariBimbinganBtn(this)"
+          style="width:100%;margin-top:8px;padding:9px;border:1px solid #fecaca;border-radius:8px;background:#fff5f5;color:#dc2626;font-size:12px;cursor:pointer">
+          🗑️ Bukan Mahasiswa Bimbingan Saya — Hapus
+        </button>
       </div>
     </div>
   `;
@@ -1403,6 +1426,105 @@ function toggleCard(nim) {
 function updateField(nim, field, value) {
   if (!formData[nim]) formData[nim] = {};
   formData[nim][field] = value;
+}
+
+// ============================================================
+// EDIT JUDUL (untuk judul yang SUDAH ADA, bukan yang kosong)
+// ============================================================
+function toggleEditJudul(nim) {
+  const box = document.getElementById('editJudulBox_' + nim);
+  if (!box) return;
+  const showing = box.style.display !== 'none';
+  box.style.display = showing ? 'none' : 'block';
+  if (showing) {
+    // Batal edit — kosongkan judulBaru supaya tidak ikut tersimpan kalau dosen klik Simpan
+    if (formData[nim]) formData[nim].judulBaru = '';
+  }
+}
+
+// ============================================================
+// RIWAYAT JUDUL — tampilkan histori perubahan judul mahasiswa
+// ============================================================
+async function lihatRiwayatJudul(nim) {
+  const box = document.getElementById('riwayatJudulBox_' + nim);
+  if (!box) return;
+
+  const showing = box.style.display !== 'none';
+  if (showing) {
+    box.style.display = 'none';
+    return;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML = '<span style="color:var(--muted)">⏳ Memuat riwayat...</span>';
+
+  try {
+    const res = await callGAS({ action: 'getRiwayatJudul', nim: nim });
+    if (res.status !== 'ok') throw new Error(res.message || 'Gagal memuat riwayat');
+
+    if (!res.data || res.data.length === 0) {
+      box.innerHTML = '<span style="color:var(--muted)">Belum ada riwayat perubahan judul untuk mahasiswa ini.</span>';
+      return;
+    }
+
+    // Urutkan terbaru dulu
+    const sorted = [...res.data].sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+
+    box.innerHTML = `
+      <div style="border-top:1px solid var(--border);padding-top:8px">
+        <div style="font-weight:600;margin-bottom:6px;color:var(--ink)">📜 Riwayat Perubahan Judul</div>
+        ${sorted.map(r => `
+          <div style="margin-bottom:8px;padding:8px;background:#f9fafb;border-radius:6px">
+            <div style="color:var(--muted);font-size:11px">${r.timestamp} — oleh ${r.diubahOleh}</div>
+            <div style="margin-top:4px"><s style="color:#9ca3af">${r.judulLama || '(kosong)'}</s></div>
+            <div style="margin-top:2px;color:var(--ink)">→ ${r.judulBaru}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (err) {
+    box.innerHTML = '<span style="color:var(--accent)">Gagal memuat riwayat: ' + err.message + '</span>';
+  }
+}
+
+// ============================================================
+// HAPUS MAHASISWA DARI DAFTAR BIMBINGAN (bukan hapus dari sistem)
+// ============================================================
+async function hapusDariBimbinganBtn(btn) {
+  const nim = btn.dataset.nim;
+  const nama = btn.dataset.nama;
+
+  const confirmed = confirm(
+    `Yakin "${nama}" (NIM ${nim}) BUKAN mahasiswa bimbingan Anda?\n\n` +
+    `Mahasiswa ini akan dihapus dari daftar bimbingan Anda saja. ` +
+    `Data mahasiswa tidak akan hilang dari sistem, dan pembimbing lain (jika ada) tidak terpengaruh.`
+  );
+  if (!confirmed) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Menghapus...';
+
+  try {
+    const res = await callGAS({
+      action: 'deleteMahasiswaDariBimbingan',
+      token: dosenToken,
+      nim: nim
+    });
+    if (res.status !== 'ok') throw new Error(res.message);
+
+    // Hapus dari daftar lokal & re-render
+    mahasiswaList = mahasiswaList.filter(m => String(m.nim) !== String(nim));
+    delete formData[nim];
+    delete progressData[nim];
+    delete historyData[nim];
+
+    showToast('✅ ' + nama.split(' ')[0] + ' dihapus dari daftar bimbingan Anda', 'success');
+    renderUI();
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '🗑️ Bukan Mahasiswa Bimbingan Saya — Hapus';
+  }
 }
 
 function selectChip(el, nim, field, value) {
@@ -1687,6 +1809,8 @@ async function simpanMahasiswaBaru() {
     const newMhs = { nim, nama, prodi, judul, posisi, kategori: '' };
     mahasiswaList.push(newMhs);
     formData[nim] = {
+      tglBimbingan: getTodayLocal(),
+      bimbinganKe: '', topikBimbingan: '',
       statusProgress: '', progressDetail: '',
       kendalaUtama: '', kendalaDetail: '',
       kesanggupan: '', catatanDosen: '', judulBaru: ''
