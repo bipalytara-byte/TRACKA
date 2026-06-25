@@ -212,6 +212,23 @@ async function loadDashboard() {
       callGAS({ action: 'getAllProgress' })
     ]);
 
+    // ── DEBUG SEMENTARA — hapus blok ini setelah masalah ditemukan ──
+    console.log('masterRes:', masterRes);
+    console.log('progressRes:', progressRes);
+    if (masterRes.status !== 'ok' || progressRes.status !== 'ok') {
+      document.getElementById('dashContent').innerHTML = `
+        <div class="loading-wrap">
+          <p>⚠️ DEBUG — respons GAS tidak 'ok':</p>
+          <pre style="text-align:left;background:#f3f4f6;padding:12px;border-radius:8px;max-width:700px;margin:12px auto;overflow:auto;font-size:11px">
+masterRes: ${JSON.stringify(masterRes, null, 2)}
+
+progressRes: ${JSON.stringify(progressRes, null, 2)}
+          </pre>
+        </div>`;
+      return;
+    }
+    // ── END DEBUG ──
+
     allMasterData   = masterRes.status === 'ok' ? masterRes.data : [];
     allProgressData = progressRes.status === 'ok' ? progressRes.data : [];
 
