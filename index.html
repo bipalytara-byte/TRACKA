@@ -1014,6 +1014,20 @@ function getTodayLocal() {
   return `${y}-${m}-${day}`;
 }
 
+// Helper: parse timestamp format 'dd/MM/yyyy HH:mm:ss' (dari GAS Utilities.formatDate)
+// menjadi objek Date yang valid untuk PERBANDINGAN, bukan perbandingan string langsung
+// (string compare bisa salah lintas bulan/tahun, misal "05/01/2027" vs "25/12/2026").
+function parseTimestamp(str) {
+  if (!str) return null;
+  const parts = String(str).trim().split(' ');
+  const datePart = parts[0];
+  const timePart = parts[1] || '00:00:00';
+  const [day, month, year] = datePart.split('/').map(Number);
+  const [hh, mm, ss] = timePart.split(':').map(Number);
+  if (!day || !month || !year) return null;
+  return new Date(year, month - 1, day, hh || 0, mm || 0, ss || 0);
+}
+
 // ============================================================
 // INIT
 // ============================================================
@@ -1058,7 +1072,9 @@ async function loadData() {
     if (progRes.status === 'ok' && progRes.data) {
       progRes.data.forEach(p => {
         const nim = String(p.nim);
-        if (!progressData[nim] || p.timestamp > progressData[nim].timestamp) {
+        const pTime = parseTimestamp(p.timestamp);
+        const existingTime = progressData[nim] ? parseTimestamp(progressData[nim].timestamp) : null;
+        if (!progressData[nim] || (pTime && existingTime && pTime > existingTime) || (pTime && !existingTime)) {
           progressData[nim] = p;
         }
       });
@@ -1702,12 +1718,39 @@ function updateProgressBar() {
 // ============================================================
 // GAS API CALL
 // ============================================================
-async function callGAS(payload) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-  return await res.json();
+// Kadang Google Apps Script mengembalikan halaman HTML (redirect/error sementara,
+// rate limit, dsb) bukan JSON — ini menyebabkan "Unexpected token '<'" saat di-parse.
+// Kejadiannya tidak konsisten (kadang berhasil, kadang gagal), jadi kita retry
+// beberapa kali sebelum benar-benar menyerah, dan beri pesan yang jelas kalau gagal.
+async function callGAS(payload, attempt = 1) {
+  const MAX_ATTEMPTS = 3;
+  let res;
+  try {
+    res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  } catch (networkErr) {
+    // Gagal total (offline, DNS, dsb) — retry kalau masih ada kesempatan
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise(r => setTimeout(r, 800 * attempt));
+      return callGAS(payload, attempt + 1);
+    }
+    throw new Error('Tidak bisa terhubung ke server. Periksa koneksi internet Anda.');
+  }
+
+  const rawText = await res.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (parseErr) {
+    // Respons bukan JSON valid (kemungkinan HTML dari Google: redirect/limit/error sementara)
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise(r => setTimeout(r, 800 * attempt));
+      return callGAS(payload, attempt + 1);
+    }
+    console.error('Respons GAS tidak valid setelah ' + MAX_ATTEMPTS + 'x percobaan:', rawText.slice(0, 200));
+    throw new Error('Server sedang sibuk atau tidak merespons dengan benar. Coba lagi dalam beberapa saat.');
+  }
 }
 
 // ============================================================

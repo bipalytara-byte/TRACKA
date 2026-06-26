@@ -96,7 +96,6 @@
     .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
     .badge-juli{background:#d1fae5;color:#065f46;}
     .badge-agustus{background:#fef3c7;color:#92400e;}
-    .badge-belum-prediksi{background:#fef3c7;color:#92400e;}
     .badge-belum{background:#f3f4f6;color:#6b7280;}
     .badge-progress{background:#dbeafe;color:#1e40af;}
 
@@ -185,20 +184,6 @@ let allMasterData = [];   // semua mahasiswa dari DATA_MAHASISWA
 let allProgressData = []; // semua progress dari PROGRESS
 let dosenSummary = [];    // summary per dosen
 
-// Helper: parse timestamp format 'dd/MM/yyyy HH:mm:ss' (dari GAS Utilities.formatDate)
-// menjadi objek Date yang valid. new Date() bawaan JS TIDAK BISA membaca format
-// dd/MM/yyyy (akan jadi Invalid Date atau salah tafsir jadi MM/dd/yyyy).
-function parseTimestamp(str) {
-  if (!str) return null;
-  const parts = String(str).trim().split(' ');
-  const datePart = parts[0]; // dd/MM/yyyy
-  const timePart = parts[1] || '00:00:00'; // HH:mm:ss
-  const [day, month, year] = datePart.split('/').map(Number);
-  const [hh, mm, ss] = timePart.split(':').map(Number);
-  if (!day || !month || !year) return null;
-  return new Date(year, month - 1, day, hh || 0, mm || 0, ss || 0);
-}
-
 // ============================================================
 // LOGIN
 // ============================================================
@@ -265,13 +250,11 @@ function buildSummary() {
     const nimDiisi = [...new Set(progDosen.map(p => String(p.nim)))];
     const sudahDiisi = nimDiisi.length;
 
-    // Ambil progress terbaru per mahasiswa (pakai parseTimestamp, bukan perbandingan string)
+    // Ambil progress terbaru per mahasiswa
     const latestPerNim = {};
     progDosen.forEach(p => {
       const nim = String(p.nim);
-      const pTime = parseTimestamp(p.timestamp);
-      const existingTime = latestPerNim[nim] ? parseTimestamp(latestPerNim[nim].timestamp) : null;
-      if (!latestPerNim[nim] || (pTime && existingTime && pTime > existingTime)) {
+      if (!latestPerNim[nim] || p.timestamp > latestPerNim[nim].timestamp) {
         latestPerNim[nim] = p;
       }
     });
@@ -283,14 +266,10 @@ function buildSummary() {
     // Total sesi bimbingan
     const totalSesi = progDosen.length;
 
-    // Timestamp terakhir (pakai objek Date asli, bukan string timestamp)
-    let lastActivity = null;
-    progDosen.forEach(p => {
-      const t = parseTimestamp(p.timestamp);
-      if (t && (!lastActivity || t > lastActivity)) {
-        lastActivity = t;
-      }
-    });
+    // Timestamp terakhir
+    const lastActivity = progDosen.length > 0
+      ? progDosen.reduce((a, b) => a.timestamp > b.timestamp ? a : b).timestamp
+      : null;
 
     const pct = totalMhs > 0 ? Math.round((sudahDiisi / totalMhs) * 100) : 0;
 
@@ -350,7 +329,7 @@ function renderDashboard() {
             <th>Dosen Pembimbing</th>
             <th>Progress Pengisian</th>
             <th>Siap Juli</th>
-            <th>Belum Diprediksi</th>
+            <th>Siap Agt</th>
             <th>Sesi</th>
             <th>Terakhir Aktif</th>
             <th>Aksi</th>
@@ -362,7 +341,7 @@ function renderDashboard() {
   dosenSummary.forEach((d, idx) => {
     const dotClass = d.pct === 100 ? 'dot-green' : d.pct > 0 ? 'dot-amber' : 'dot-red';
     const lastActive = d.lastActivity
-      ? d.lastActivity.toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+      ? new Date(d.lastActivity).toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
       : '<span style="color:var(--accent)">Belum ada aktivitas</span>';
     const namaShort = d.nama.split(',')[0];
 
@@ -377,7 +356,7 @@ function renderDashboard() {
           ${d.sudahDiisi}/${d.totalMhs} (${d.pct}%)
         </td>
         <td><span class="badge badge-juli">${d.siapJuli}</span></td>
-        <td><span class="badge badge-belum-prediksi">${d.belumPrediksi}</span></td>
+        <td><span class="badge badge-agustus">${d.siapAgustus}</span></td>
         <td style="color:var(--purple);font-weight:600">${d.totalSesi}x</td>
         <td class="last-seen">${lastActive}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
@@ -438,9 +417,9 @@ function renderDetailDosen(idx, container) {
     const kesanggupanBadge = latest
       ? (latest.kesanggupan === 'Siap Juli'
           ? `<span class="badge badge-juli">Siap Juli</span>`
-          : latest.kesanggupan === 'Belum Bisa Diprediksi'
-          ? `<span class="badge badge-belum-prediksi">Belum Diprediksi</span>`
-          : `<span class="badge badge-belum">${latest.kesanggupan || 'Belum diisi'}</span>`)
+          : latest.kesanggupan === 'Siap Agustus'
+          ? `<span class="badge badge-agustus">Siap Agt</span>`
+          : `<span class="badge badge-belum">Belum</span>`)
       : '<span style="color:var(--accent);font-size:11px">Belum diisi</span>';
 
     const statusBadge = latest
@@ -448,9 +427,7 @@ function renderDetailDosen(idx, container) {
       : '—';
 
     const lastDate = latest
-      ? (parseTimestamp(latest.timestamp)
-          ? parseTimestamp(latest.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short'})
-          : '—')
+      ? new Date(latest.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short'})
       : '—';
 
     html += `<tr>
@@ -570,7 +547,7 @@ function exportPDFDosen(idx) {
       if (data.section === 'body' && data.column.index === 5) {
         const val = data.cell.raw;
         if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
-        else if (val === 'Belum Bisa Diprediksi') data.cell.styles.textColor = [146, 64, 14];
+        else if (val === 'Siap Agustus') data.cell.styles.textColor = [146, 64, 14];
         else if (val === 'Belum diisi') data.cell.styles.textColor = [233, 69, 96];
       }
     }
@@ -646,12 +623,36 @@ async function exportAllPDF() {
 // ============================================================
 // GAS API — tambah getAllMaster & getAllProgress
 // ============================================================
-async function callGAS(payload) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-  return await res.json();
+// Kadang Google Apps Script mengembalikan halaman HTML (redirect/error sementara,
+// rate limit, dsb) bukan JSON — ini menyebabkan "Unexpected token '<'" saat di-parse.
+// Kejadiannya tidak konsisten, jadi kita retry beberapa kali sebelum menyerah.
+async function callGAS(payload, attempt = 1) {
+  const MAX_ATTEMPTS = 3;
+  let res;
+  try {
+    res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  } catch (networkErr) {
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise(r => setTimeout(r, 800 * attempt));
+      return callGAS(payload, attempt + 1);
+    }
+    throw new Error('Tidak bisa terhubung ke server. Periksa koneksi internet Anda.');
+  }
+
+  const rawText = await res.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (parseErr) {
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise(r => setTimeout(r, 800 * attempt));
+      return callGAS(payload, attempt + 1);
+    }
+    console.error('Respons GAS tidak valid setelah ' + MAX_ATTEMPTS + 'x percobaan:', rawText.slice(0, 200));
+    throw new Error('Server sedang sibuk atau tidak merespons dengan benar. Coba lagi dalam beberapa saat.');
+  }
 }
 
 // ============================================================
