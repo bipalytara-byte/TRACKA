@@ -1165,31 +1165,23 @@ function renderUI() {
 
   main.innerHTML = html;
 
-  // Init form state dari progress existing
+  // Init form state — SETIAP sesi baru harus mulai dari kosong (kecuali tglBimbingan
+  // yang default ke hari ini). Nilai dari `existing` (sesi sebelumnya) HANYA dipakai
+  // untuk ditampilkan di kotak "Sesi Terakhir" (read-only), tidak pernah untuk
+  // mengisi field input sesi baru — supaya dosen tidak salah kira field sudah terisi.
   mahasiswaList.forEach(m => {
     const existing = progressData[String(m.nim)];
+    formData[String(m.nim)] = {
+      tglBimbingan: getTodayLocal(),
+      bimbinganKe: '',
+      topikBimbingan: '',
+      statusProgress: '', progressDetail: '',
+      kendalaUtama: '', kendalaDetail: '',
+      kesanggupan: '', catatanDosen: '', judulBaru: ''
+    };
     if (existing) {
-      formData[String(m.nim)] = {
-        tglBimbingan: getTodayLocal(), // selalu default ke hari ini untuk sesi baru
-        statusProgress: existing.statusProgress || '',
-        progressDetail: existing.progressDetail || '',
-        kendalaUtama: existing.kendalaUtama || '',
-        kendalaDetail: existing.kendalaDetail || '',
-        kesanggupan: existing.kesanggupan || '',
-        catatanDosen: existing.catatanDosen || '',
-        judulBaru: ''
-      };
-      // Pre-fill form elements
+      // Pre-fill form elements (saat ini hanya tglBimbingan yang di-set di dalamnya)
       prefillForm(m.nim, existing);
-    } else {
-      formData[String(m.nim)] = {
-        tglBimbingan: getTodayLocal(),
-        bimbinganKe: '',
-        topikBimbingan: '',
-        statusProgress: '', progressDetail: '',
-        kendalaUtama: '', kendalaDetail: '',
-        kesanggupan: '', catatanDosen: '', judulBaru: ''
-      };
     }
   });
 
@@ -1234,25 +1226,23 @@ function renderMhsCard(m, posisiCls) {
         <div id="riwayatJudulBox_${nim}" style="display:none;margin-top:10px;font-size:12px"></div>
        </div>`;
 
-  // Build status progress options
+  // Build status progress options — SENGAJA tidak auto-select dari sesi sebelumnya.
+  // Dosen harus memilih ulang dari kosong ("— Pilih status —") untuk setiap sesi baru.
   const statusOpts = STATUS_PROGRESS.map(s =>
-    `<option value="${s}" ${existing && existing.statusProgress === s ? 'selected' : ''}>${s}</option>`
+    `<option value="${s}">${s}</option>`
   ).join('');
 
-  // Build kendala options
+  // Build kendala options — sama, tidak auto-select dari sesi sebelumnya.
   const kendalaOpts = KENDALA_OPTIONS.map(k =>
-    `<option value="${k}" ${existing && existing.kendalaUtama === k ? 'selected' : ''}>${k}</option>`
+    `<option value="${k}">${k}</option>`
   ).join('');
 
-  // Build kesanggupan chips
+  // Build kesanggupan chips — SENGAJA tidak auto-select dari sesi sebelumnya.
   const kesanggupanChips = KESANGGUPAN.map(k =>
-    `<div class="chip ${k.cls} ${existing && existing.kesanggupan === k.value ? 'selected' : ''}"
+    `<div class="chip ${k.cls}"
       onclick="selectChip(this, '${nim}', 'kesanggupan', '${k.value}')">${k.label}</div>`
   ).join('');
 
-  const existingDetail = existing ? (existing.progressDetail || '') : '';
-  const existingTopik = existing ? (existing.topikBimbingan || '') : '';
-  const existingKe = existing ? (existing.bimbinganKe || '') : '';
   // Tanggal hari ini format yyyy-mm-dd (zona waktu lokal, bukan UTC)
   const today = getTodayLocal();
   // PENTING: isi formData juga, bukan cuma value HTML — kalau dosen tidak pernah
@@ -1260,8 +1250,10 @@ function renderMhsCard(m, posisiCls) {
   // hari ini, supaya validasi saveSingle() tidak salah mendeteksi "belum diisi".
   if (!formData[nim]) formData[nim] = {};
   if (!formData[nim].tglBimbingan) formData[nim].tglBimbingan = today;
-  const showLainnya = existing && existing.statusProgress === 'Lainnya' ? 'show' : '';
-  const showKendalaLainnya = existing && existing.kendalaUtama === 'Lainnya' ? 'show' : '';
+  // SENGAJA selalu false — textarea "Lainnya" untuk sesi baru harus tertutup di awal,
+  // tidak ikut terbuka karena status sesi SEBELUMNYA kebetulan "Lainnya".
+  const showLainnya = '';
+  const showKendalaLainnya = '';
   // Hitung total sesi mahasiswa ini
   const sesiCount = historyData[nim] ? historyData[nim].length : 0;
 
@@ -1338,7 +1330,6 @@ function renderMhsCard(m, posisiCls) {
           <div style="flex:1">
             <div class="field-label">🔢 Bimbingan Ke-</div>
             <input type="number" id="bimbinganKe_${nim}" min="1"
-              value="${existingKe}"
               oninput="updateField('${nim}','bimbinganKe',this.value)"
               placeholder="Auto"
               style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none" />
@@ -1349,7 +1340,6 @@ function renderMhsCard(m, posisiCls) {
           <div class="field-label">💡 Topik Bimbingan <span class="req">*</span></div>
           <input type="text" id="topikBimbingan_${nim}"
             placeholder="Contoh: Review Bab 3, Perbaikan metodologi..."
-            value="${existingTopik}"
             oninput="updateField('${nim}','topikBimbingan',this.value)" />
         </div>
 
@@ -1363,10 +1353,10 @@ function renderMhsCard(m, posisiCls) {
           <div class="lainnya-field ${showLainnya}" id="lainnyaProgress_${nim}">
             <input type="text" id="progressDetail_${nim}"
               placeholder="Jelaskan progress secara singkat..."
-              value="${existingDetail}"
               oninput="updateField('${nim}','progressDetail',this.value)" />
           </div>
         </div>
+
 
         <div class="field-group">
           <div class="field-label">⚠️ Kendala Utama <span class="req">*</span></div>
@@ -1378,7 +1368,6 @@ function renderMhsCard(m, posisiCls) {
           <div class="lainnya-field ${showKendalaLainnya}" id="lainnyaKendala_${nim}">
             <input type="text" id="kendalaDetail_${nim}"
               placeholder="Jelaskan kendala secara singkat..."
-              value="${existing ? (existing.kendalaDetail || '') : ''}"
               oninput="updateField('${nim}','kendalaDetail',this.value)" />
           </div>
         </div>
@@ -1393,7 +1382,7 @@ function renderMhsCard(m, posisiCls) {
         <div class="field-group">
           <div class="field-label">💬 Catatan Dosen <span style="color:var(--muted);font-weight:400">(opsional)</span></div>
           <textarea id="catatanDosen_${nim}" placeholder="Catatan khusus, kondisi mahasiswa, dll..."
-            oninput="updateField('${nim}','catatanDosen',this.value)">${existing ? (existing.catatanDosen || '') : ''}</textarea>
+            oninput="updateField('${nim}','catatanDosen',this.value)"></textarea>
         </div>
 
         <button class="btn-submit" id="btnSave_${nim}"
@@ -1546,27 +1535,20 @@ function toggleKendalaLainnya(nim, value) {
 
 function prefillForm(nim, data) {
   // dipanggil setelah render, element sudah ada di DOM
+  // PENTING: untuk SESI BARU, field topik/status/kendala/bimbingan-ke HARUS KOSONG.
+  // data di sini adalah entri progress TERAKHIR (sesi lalu) — hanya dipakai untuk
+  // ditampilkan di kotak "Sesi Terakhir" (read-only), BUKAN untuk auto-fill form input.
+  // Auto-fill sebelumnya menyebabkan dosen mengira sudah terisi, tidak menyentuh field
+  // itu, padahal formData JS-nya tetap kosong — berakibat data tersimpan tidak konsisten.
   setTimeout(() => {
-    const spEl = document.getElementById('statusProgress_' + nim);
-    const kuEl = document.getElementById('kendalaUtama_' + nim);
     const tglEl = document.getElementById('tglBimbingan_' + nim);
-    const topikEl = document.getElementById('topikBimbingan_' + nim);
-    const keEl = document.getElementById('bimbinganKe_' + nim);
-    if (spEl && data.statusProgress) {
-      spEl.value = data.statusProgress;
-      toggleLainnya(nim, data.statusProgress);
-    }
-    if (kuEl && data.kendalaUtama) {
-      kuEl.value = data.kendalaUtama;
-      toggleKendalaLainnya(nim, data.kendalaUtama);
-    }
     if (tglEl) {
       const todayLocal = getTodayLocal();
       tglEl.value = todayLocal;
       updateField(nim, 'tglBimbingan', todayLocal); // jangan cuma ubah tampilan, formData ikut diisi
     }
-    if (topikEl && data.topikBimbingan) topikEl.value = data.topikBimbingan;
-    if (keEl && data.bimbinganKe) keEl.value = data.bimbinganKe;
+    // topikBimbingan, statusProgress, kendalaUtama, bimbinganKe SENGAJA TIDAK di-prefill.
+    // Dosen harus mengisi ulang dari kosong setiap sesi baru.
   }, 50);
 }
 
