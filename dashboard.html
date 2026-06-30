@@ -40,6 +40,8 @@
     .btn-header{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;display:flex;align-items:center;gap:5px;}
     .btn-export-all{background:var(--green);color:white;}
     .btn-export-all:hover{background:var(--green-lt);}
+    .btn-export-progress{background:var(--purple);color:white;}
+    .btn-export-progress:hover{background:#6d28d9;}
     .btn-refresh{background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);}
     .btn-refresh:hover{background:rgba(255,255,255,0.2);}
 
@@ -48,7 +50,8 @@
 
     /* OVERVIEW CARDS */
     .overview-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;}
-    @media(min-width:600px){.overview-grid{grid-template-columns:repeat(4,1fr);}}
+    @media(min-width:600px){.overview-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(min-width:900px){.overview-grid{grid-template-columns:repeat(5,1fr);}}
     .ov-card{background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center;}
     .ov-card .num{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;color:var(--navy);}
     .ov-card .num.green{color:var(--green);}
@@ -96,6 +99,7 @@
     .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
     .badge-juli{background:#d1fae5;color:#065f46;}
     .badge-agustus{background:#fef3c7;color:#92400e;}
+    .badge-blmprediksi{background:#fde8ec;color:#9f1239;}
     .badge-belum{background:#f3f4f6;color:#6b7280;}
     .badge-progress{background:#dbeafe;color:#1e40af;}
 
@@ -140,6 +144,7 @@
       <div class="header-actions">
         <button class="btn-header btn-refresh" onclick="loadDashboard()">🔄 Refresh</button>
         <button class="btn-header btn-export-all" onclick="exportAllPDF()">📄 Export Semua PDF</button>
+        <button class="btn-header btn-export-progress" onclick="exportLaporanProgress()">📊 Export Laporan Progress</button>
       </div>
     </div>
   </header>
@@ -183,6 +188,22 @@ const DOSEN_TOKENS = {
 let allMasterData = [];   // semua mahasiswa dari DATA_MAHASISWA
 let allProgressData = []; // semua progress dari PROGRESS
 let dosenSummary = [];    // summary per dosen
+
+// ============================================================
+// HELPER — parse timestamp "DD/MM/YYYY HH:mm:ss" dari GAS
+// (new Date() bawaan JS gagal parse format ini -> Invalid Date,
+// dan perbandingan string juga salah urutan kronologisnya)
+// ============================================================
+function parseIndoDateTime(str) {
+  if (!str) return null;
+  const m = String(str).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    const [, dd, mm, yyyy, hh, min, sec] = m;
+    return new Date(+yyyy, +mm - 1, +dd, +hh, +min, sec ? +sec : 0);
+  }
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
 
 // ============================================================
 // LOGIN
@@ -250,32 +271,34 @@ function buildSummary() {
     const nimDiisi = [...new Set(progDosen.map(p => String(p.nim)))];
     const sudahDiisi = nimDiisi.length;
 
-    // Ambil progress terbaru per mahasiswa
+    // Ambil progress terbaru per mahasiswa (perbandingan tanggal yang benar)
     const latestPerNim = {};
     progDosen.forEach(p => {
       const nim = String(p.nim);
-      if (!latestPerNim[nim] || p.timestamp > latestPerNim[nim].timestamp) {
+      const cur = latestPerNim[nim];
+      if (!cur || (parseIndoDateTime(p.timestamp) || 0) > (parseIndoDateTime(cur.timestamp) || 0)) {
         latestPerNim[nim] = p;
       }
     });
 
     const siapJuli = Object.values(latestPerNim).filter(p => p.kesanggupan === 'Siap Juli').length;
-    const siapAgustus = Object.values(latestPerNim).filter(p => p.kesanggupan === 'Siap Agustus').length;
     const belumPrediksi = Object.values(latestPerNim).filter(p => p.kesanggupan === 'Belum Bisa Diprediksi').length;
 
     // Total sesi bimbingan
     const totalSesi = progDosen.length;
 
-    // Timestamp terakhir
+    // Timestamp terakhir (kronologis, bukan urutan teks)
     const lastActivity = progDosen.length > 0
-      ? progDosen.reduce((a, b) => a.timestamp > b.timestamp ? a : b).timestamp
+      ? progDosen.reduce((a, b) =>
+          (parseIndoDateTime(a.timestamp) || 0) > (parseIndoDateTime(b.timestamp) || 0) ? a : b
+        ).timestamp
       : null;
 
     const pct = totalMhs > 0 ? Math.round((sudahDiisi / totalMhs) * 100) : 0;
 
     return {
       nama, token, totalMhs, sudahDiisi, pct,
-      siapJuli, siapAgustus, belumPrediksi,
+      siapJuli, belumPrediksi,
       totalSesi, lastActivity, mahasiswa,
       latestPerNim, progDosen
     };
@@ -292,6 +315,7 @@ function renderDashboard() {
   const totalMhs = allMasterData.length;
   const totalDiisi = [...new Set(allProgressData.map(p => p.nim + '|' + p.dosenNama))].length;
   const totalSiapJuli = dosenSummary.reduce((s, d) => s + d.siapJuli, 0);
+  const totalBelumPrediksi = dosenSummary.reduce((s, d) => s + d.belumPrediksi, 0);
   const dosenAktif = dosenSummary.filter(d => d.sudahDiisi > 0).length;
   const totalSesi = allProgressData.length;
 
@@ -309,6 +333,10 @@ function renderDashboard() {
       <div class="ov-card">
         <div class="num amber">${totalSiapJuli}</div>
         <div class="lbl">Siap Maju Juli</div>
+      </div>
+      <div class="ov-card">
+        <div class="num" style="color:#e94560">${totalBelumPrediksi}</div>
+        <div class="lbl">Belum Bisa Diprediksi</div>
       </div>
       <div class="ov-card">
         <div class="num purple">${dosenAktif}/16</div>
@@ -329,7 +357,7 @@ function renderDashboard() {
             <th>Dosen Pembimbing</th>
             <th>Progress Pengisian</th>
             <th>Siap Juli</th>
-            <th>Siap Agt</th>
+            <th>Blm Diprediksi</th>
             <th>Sesi</th>
             <th>Terakhir Aktif</th>
             <th>Aksi</th>
@@ -340,8 +368,9 @@ function renderDashboard() {
 
   dosenSummary.forEach((d, idx) => {
     const dotClass = d.pct === 100 ? 'dot-green' : d.pct > 0 ? 'dot-amber' : 'dot-red';
-    const lastActive = d.lastActivity
-      ? new Date(d.lastActivity).toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+    const lastActiveDate = parseIndoDateTime(d.lastActivity);
+    const lastActive = lastActiveDate
+      ? lastActiveDate.toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
       : '<span style="color:var(--accent)">Belum ada aktivitas</span>';
     const namaShort = d.nama.split(',')[0];
 
@@ -356,7 +385,7 @@ function renderDashboard() {
           ${d.sudahDiisi}/${d.totalMhs} (${d.pct}%)
         </td>
         <td><span class="badge badge-juli">${d.siapJuli}</span></td>
-        <td><span class="badge badge-agustus">${d.siapAgustus}</span></td>
+        <td><span class="badge badge-blmprediksi">${d.belumPrediksi}</span></td>
         <td style="color:var(--purple);font-weight:600">${d.totalSesi}x</td>
         <td class="last-seen">${lastActive}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
@@ -417,17 +446,18 @@ function renderDetailDosen(idx, container) {
     const kesanggupanBadge = latest
       ? (latest.kesanggupan === 'Siap Juli'
           ? `<span class="badge badge-juli">Siap Juli</span>`
-          : latest.kesanggupan === 'Siap Agustus'
-          ? `<span class="badge badge-agustus">Siap Agt</span>`
-          : `<span class="badge badge-belum">Belum</span>`)
+          : latest.kesanggupan === 'Belum Bisa Diprediksi'
+          ? `<span class="badge badge-blmprediksi">Blm Diprediksi</span>`
+          : `<span class="badge badge-belum">Belum diisi</span>`)
       : '<span style="color:var(--accent);font-size:11px">Belum diisi</span>';
 
     const statusBadge = latest
       ? `<span class="badge badge-progress">${latest.statusProgress}</span>`
       : '—';
 
-    const lastDate = latest
-      ? new Date(latest.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short'})
+    const lastDateObj = latest ? parseIndoDateTime(latest.timestamp) : null;
+    const lastDate = lastDateObj
+      ? lastDateObj.toLocaleDateString('id-ID',{day:'numeric',month:'short'})
       : '—';
 
     html += `<tr>
@@ -562,7 +592,7 @@ function exportPDFDosen(idx) {
     doc.text('Riwayat Sesi Bimbingan', 14, finalY);
 
     const sesiRows = d.progDosen
-      .sort((a, b) => a.timestamp > b.timestamp ? 1 : -1)
+      .sort((a, b) => (parseIndoDateTime(a.timestamp) || 0) - (parseIndoDateTime(b.timestamp) || 0))
       .map(p => [
         p.tglBimbingan || p.periode,
         'Ke-' + (p.bimbinganKe || '?'),
@@ -618,6 +648,294 @@ async function exportAllPDF() {
     exportPDFDosen(i);
   }
   setTimeout(() => showToast('✅ Semua PDF berhasil diunduh!', 'success'), 1000);
+}
+
+// ============================================================
+// EXPORT PDF — LAPORAN PROGRESS GABUNGAN (Admin / WK I)
+// Satu file PDF berisi ringkasan + rekap semua dosen + detail
+// per dosen. Murni progress, BUKAN evaluasi kinerja dosen.
+// ============================================================
+function exportLaporanProgress() {
+  if (!allProgressData.length) {
+    showToast('Belum ada data progress untuk diexport!', 'error');
+    return;
+  }
+  showToast('⏳ Membuat Laporan Progress...', '');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const now = new Date();
+  const tglCetak = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // ---------- Helper: header tiap halaman baru ----------
+  function pageHeader(title, subtitle) {
+    doc.setFillColor(26, 26, 46);
+    doc.rect(0, 0, 210, 32, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text(title, 14, 13);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(subtitle, 14, 20);
+    doc.text('Dicetak: ' + tglCetak, 14, 26);
+    doc.setFillColor(233, 69, 96);
+    doc.rect(0, 32, 210, 1.5, 'F');
+  }
+
+  const SUBTITLE = 'Laporan Progress Bimbingan TA/Skripsi | BIPA Magelang';
+
+  // ============================================================
+  // HALAMAN 1 — RINGKASAN KESELURUHAN
+  // ============================================================
+  pageHeader('TRACKA — Laporan Progress Bimbingan (Gabungan)', SUBTITLE);
+
+  const totalSesi = allProgressData.length;
+  const totalDosenAktif = dosenSummary.filter(d => d.totalSesi > 0).length;
+  const totalMhsDilaporkan = new Set(allProgressData.map(p => String(p.nim))).size;
+
+  // Kesanggupan terbaru per mahasiswa (gabungan semua dosen)
+  const latestGlobal = {};
+  allProgressData.forEach(p => {
+    const key = String(p.nim) + '|' + p.dosenNama;
+    const cur = latestGlobal[key];
+    if (!cur || (parseIndoDateTime(p.timestamp) || 0) > (parseIndoDateTime(cur.timestamp) || 0)) {
+      latestGlobal[key] = p;
+    }
+  });
+  const latestArr = Object.values(latestGlobal);
+  const cSiapJuli = latestArr.filter(p => p.kesanggupan === 'Siap Juli').length;
+  const cBelumPrediksi = latestArr.filter(p => p.kesanggupan === 'Belum Bisa Diprediksi').length;
+
+  // Kendala lancar vs ada kendala
+  const cLancar = allProgressData.filter(p => p.kendalaUtama === 'Tidak Ada Kendala').length;
+  const cTerisiKendala = allProgressData.filter(p => p.kendalaUtama && p.kendalaUtama !== '').length;
+  const pctLancar = cTerisiKendala ? Math.round((cLancar / cTerisiKendala) * 100) : 0;
+
+  doc.setTextColor(26, 26, 46);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Ringkasan Periode Pekan TRACKA Ini', 14, 42);
+
+  // Summary cards baris 1: aktivitas
+  const cards1 = [
+    { label: 'Total Sesi', val: totalSesi, x: 14 },
+    { label: 'Dosen Aktif', val: totalDosenAktif, x: 58 },
+    { label: 'Mhs Dilaporkan', val: totalMhsDilaporkan, x: 102 },
+    { label: '% Sesi Lancar', val: pctLancar + '%', x: 146 },
+  ];
+  cards1.forEach(c => {
+    doc.setFillColor(240, 242, 245);
+    doc.roundedRect(c.x, 47, 40, 18, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(26, 26, 46);
+    doc.text(String(c.val), c.x + 20, 57, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128);
+    doc.text(c.label, c.x + 20, 62, { align: 'center' });
+  });
+
+  // Summary cards baris 2: kesanggupan
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Kesanggupan Mahasiswa (status terakhir per mahasiswa per dosen)', 14, 76);
+
+  const cards2 = [
+    { label: 'Siap Juli', val: cSiapJuli, x: 14, color: [45, 106, 79] },
+    { label: 'Belum Bisa Diprediksi', val: cBelumPrediksi, x: 58, color: [233, 69, 96] },
+    { label: 'Belum Diisi', val: latestArr.length - cSiapJuli - cBelumPrediksi, x: 102, color: [107, 114, 128] },
+  ];
+  cards2.forEach(c => {
+    doc.setFillColor(240, 242, 245);
+    doc.roundedRect(c.x, 81, 40, 18, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(c.color[0], c.color[1], c.color[2]);
+    doc.text(String(c.val), c.x + 20, 91, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(c.label, c.x + 20, 96, { align: 'center' });
+  });
+
+  // ---------- Tabel rekap tahapan progress ----------
+  const statusCount = {};
+  allProgressData.forEach(p => {
+    const s = p.statusProgress || 'Belum Diisi';
+    statusCount[s] = (statusCount[s] || 0) + 1;
+  });
+  const statusRows = Object.entries(statusCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([s, c]) => [s, c, Math.round((c / totalSesi) * 100) + '%']);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Rekap Tahapan Progress (seluruh sesi)', 14, 108);
+
+  doc.autoTable({
+    startY: 111,
+    head: [['Tahapan / Status Progress', 'Jumlah Sesi', '%']],
+    body: statusRows,
+    styles: { fontSize: 8, cellPadding: 2.5 },
+    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+  });
+
+  // ---------- Tabel rekap kendala ----------
+  const kendalaCount = {};
+  allProgressData.forEach(p => {
+    const k = p.kendalaUtama || 'Belum Diisi';
+    kendalaCount[k] = (kendalaCount[k] || 0) + 1;
+  });
+  const kendalaRows = Object.entries(kendalaCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, c]) => [k, c, Math.round((c / totalSesi) * 100) + '%']);
+
+  const finalY1 = doc.lastAutoTable.finalY + 8;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Rekap Kendala Bimbingan (seluruh sesi)', 14, finalY1);
+
+  doc.autoTable({
+    startY: finalY1 + 3,
+    head: [['Kategori Kendala', 'Jumlah Sesi', '%']],
+    body: kendalaRows,
+    styles: { fontSize: 8, cellPadding: 2.5 },
+    headStyles: { fillColor: [45, 106, 79], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+  });
+
+  // ============================================================
+  // HALAMAN 2 — TABEL AKTIVITAS SEMUA DOSEN
+  // ============================================================
+  doc.addPage();
+  pageHeader('TRACKA — Aktivitas Bimbingan per Dosen', SUBTITLE);
+
+  const dosenRows = [...dosenSummary]
+    .sort((a, b) => b.totalSesi - a.totalSesi)
+    .map((d, i) => [
+      i + 1,
+      d.nama,
+      d.totalSesi,
+      d.totalMhs,
+      d.siapJuli,
+      d.belumPrediksi,
+    ]);
+
+  doc.autoTable({
+    startY: 40,
+    head: [['#', 'Nama Dosen', 'Total Sesi', 'Mhs Dibimbing', 'Siap Juli', 'Belum Diprediksi']],
+    body: dosenRows,
+    styles: { fontSize: 8, cellPadding: 3 },
+    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+    columnStyles: {
+      0: { cellWidth: 8 },
+      1: { cellWidth: 62 },
+    }
+  });
+  doc.setFontSize(7.5);
+  doc.setTextColor(150);
+  doc.text('Catatan: tabel ini murni rekap aktivitas & progress, bukan penilaian kinerja dosen pembimbing.', 14, doc.lastAutoTable.finalY + 6);
+
+  // ============================================================
+  // HALAMAN PER DOSEN — detail mahasiswa & kesanggupan
+  // ============================================================
+  [...dosenSummary]
+    .sort((a, b) => b.totalSesi - a.totalSesi)
+    .forEach(d => {
+      if (d.totalSesi === 0) return; // skip dosen tanpa aktivitas pada periode ini
+
+      doc.addPage();
+      pageHeader('TRACKA — Profil Progress: ' + d.nama.split(',')[0], SUBTITLE);
+
+      doc.setTextColor(26, 26, 46);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(d.nama, 14, 42);
+
+      const cards = [
+        { label: 'Total Mhs', val: d.totalMhs, x: 14 },
+        { label: 'Dilaporkan', val: d.sudahDiisi, x: 58 },
+        { label: 'Total Sesi', val: d.totalSesi, x: 102 },
+        { label: 'Belum Diprediksi', val: d.belumPrediksi, x: 146 },
+      ];
+      cards.forEach(c => {
+        doc.setFillColor(240, 242, 245);
+        doc.roundedRect(c.x, 47, 40, 16, 3, 3, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(26, 26, 46);
+        doc.text(String(c.val), c.x + 20, 56, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(107, 114, 128);
+        doc.text(c.label, c.x + 20, 61, { align: 'center' });
+      });
+
+      const tableRows = d.mahasiswa.map((m, i) => {
+        const nim = String(m.nim);
+        const latest = d.latestPerNim[nim];
+        const sesi = d.progDosen.filter(p => String(p.nim) === nim).length;
+        return [
+          i + 1,
+          m.nama,
+          m.nim,
+          m.pb1 === d.nama ? 'PB1' : 'PB2',
+          latest ? latest.statusProgress : 'Belum diisi',
+          latest ? (latest.kesanggupan || '—') : '—',
+          latest ? (latest.kendalaUtama || '—') : '—',
+          sesi + 'x'
+        ];
+      });
+
+      doc.autoTable({
+        startY: 69,
+        head: [['No', 'Nama Mahasiswa', 'NIM', 'Pos', 'Status Progress', 'Kesanggupan', 'Kendala', 'Sesi']],
+        body: tableRows,
+        styles: { fontSize: 7.5, cellPadding: 2.5 },
+        headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 249, 250] },
+        columnStyles: {
+          0: { cellWidth: 7 },
+          1: { cellWidth: 38 },
+          2: { cellWidth: 16 },
+          3: { cellWidth: 9 },
+          4: { cellWidth: 32 },
+          5: { cellWidth: 30 },
+          6: { cellWidth: 32 },
+          7: { cellWidth: 10 }
+        },
+        didParseCell: function (data) {
+          if (data.section === 'body' && data.column.index === 5) {
+            const val = data.cell.raw;
+            if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
+            else if (val === 'Belum Bisa Diprediksi') data.cell.styles.textColor = [233, 69, 96];
+          }
+        }
+      });
+    });
+
+  // ============================================================
+  // FOOTER SEMUA HALAMAN
+  // ============================================================
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text('TRACKA — BIPA | Halaman ' + i + ' dari ' + pageCount, 14, 290);
+    doc.text('Dicetak: ' + tglCetak, 196, 290, { align: 'right' });
+  }
+
+  const filename = 'TRACKA_Laporan_Progress_Gabungan_' + now.toISOString().split('T')[0] + '.pdf';
+  doc.save(filename);
+  showToast('✅ Laporan Progress gabungan berhasil diunduh!', 'success');
 }
 
 // ============================================================
