@@ -1,921 +1,1415 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TRACKA — Dashboard WK I</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRACKA — Laporan Progress TA/Skripsi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <style>
     :root {
-      --navy:#1a1a2e; --blue:#0f3460; --accent:#e94560;
-      --green:#2d6a4f; --green-lt:#52b788; --amber:#f4a261;
-      --purple:#7c3aed; --bg:#f0f2f5; --card:#ffffff;
-      --text:#1a1a2e; --muted:#6b7280; --border:#e5e7eb;
-      --radius:12px; --shadow:0 2px 12px rgba(0,0,0,0.08);
+      --navy:     #1a1a2e;
+      --navy-mid: #16213e;
+      --blue:     #0f3460;
+      --accent:   #e94560;
+      --green:    #2d6a4f;
+      --green-lt: #52b788;
+      --amber:    #f4a261;
+      --bg:       #f0f2f5;
+      --card:     #ffffff;
+      --text:     #1a1a2e;
+      --muted:    #6b7280;
+      --border:   #e5e7eb;
+      --radius:   12px;
+      --shadow:   0 2px 12px rgba(0,0,0,0.08);
     }
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-    /* LOGIN */
-    .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-    .login-card{background:white;border-radius:20px;padding:40px 32px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.12);text-align:center;}
-    .login-logo{width:56px;height:56px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;color:white;font-size:18px;margin:0 auto 20px;}
-    .login-card h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--navy);margin-bottom:6px;}
-    .login-card p{font-size:13px;color:var(--muted);margin-bottom:28px;}
-    .login-input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;text-align:center;letter-spacing:2px;}
-    .login-input:focus{border-color:var(--navy);}
-    .btn-login{width:100%;padding:13px;background:var(--navy);color:white;border:none;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
-    .btn-login:hover{background:var(--blue);}
-    .login-err{color:var(--accent);font-size:12px;margin-top:8px;display:none;}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* HEADER */
-    header{background:var(--navy);padding:16px 24px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.3);}
-    .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;}
-    .header-logo{width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;color:white;font-size:13px;flex-shrink:0;}
-    .header-text h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:white;}
-    .header-text p{font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px;}
-    .header-actions{margin-left:auto;display:flex;gap:8px;}
-    .btn-header{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;display:flex;align-items:center;gap:5px;}
-    .btn-export-all{background:var(--green);color:white;}
-    .btn-export-all:hover{background:var(--green-lt);}
-    .btn-export-progress{background:var(--purple);color:white;}
-    .btn-export-progress:hover{background:#6d28d9;}
-    .btn-refresh{background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);}
-    .btn-refresh:hover{background:rgba(255,255,255,0.2);}
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
 
-    /* MAIN */
-    main{max-width:1200px;margin:0 auto;padding:24px 16px 60px;}
+    /* ── HEADER ── */
+    header {
+      background: var(--navy);
+      padding: 20px 24px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+    }
+    .header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-logo {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      color: white;
+      font-size: 14px;
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+    }
+    .header-text p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      margin-top: 2px;
+    }
+    .periode-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
 
-    /* OVERVIEW CARDS */
-    .overview-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;}
-    @media(min-width:600px){.overview-grid{grid-template-columns:repeat(4,1fr);}}
-    .ov-card{background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center;}
-    .ov-card .num{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;color:var(--navy);}
-    .ov-card .num.green{color:var(--green);}
-    .ov-card .num.amber{color:var(--amber);}
-    .ov-card .num.purple{color:var(--purple);}
-    .ov-card .lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+    /* ── MAIN ── */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
 
-    /* SECTION HEADER */
-    .sec-header{display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px;}
-    .sec-header h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--navy);}
+    /* ── DOSEN CARD ── */
+    .dosen-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--accent);
+    }
+    .dosen-card .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .dosen-card .nama {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .dosen-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .stat-item {
+      text-align: center;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 8px 14px;
+      flex: 1;
+    }
+    .stat-item .num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+    .stat-item .num.green { color: var(--green); }
+    .stat-item .num.amber { color: var(--amber); }
+    .stat-item .lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
 
-    /* DOSEN TABLE */
-    .table-wrap{background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px;}
-    table{width:100%;border-collapse:collapse;}
-    thead tr{background:var(--navy);}
-    th{padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap;}
-    td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);}
-    tr:last-child td{border-bottom:none;}
-    tr:hover td{background:#fafbfc;}
+    /* ── PROGRESS BAR ── */
+    .progress-bar-wrap {
+      margin-top: 12px;
+    }
+    .progress-bar-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-lt), var(--green));
+      border-radius: 99px;
+      transition: width 0.6s ease;
+    }
+    .progress-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
 
-    .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
-    .dot-green{background:var(--green-lt);}
-    .dot-amber{background:var(--amber);}
-    .dot-red{background:var(--accent);}
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 24px 0 12px;
+    }
+    .section-header h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .badge-count {
+      background: var(--navy);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .posisi-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+    .posisi-tag.p1 { background: #dbeafe; color: #1e40af; }
+    .posisi-tag.p2 { background: #fce7f3; color: #9d174d; }
 
-    .pct-bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-right:6px;}
-    .pct-fill{height:100%;background:var(--green-lt);border-radius:99px;}
+    /* ── MAHASISWA CARD ── */
+    .mhs-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: box-shadow 0.2s;
+    }
+    .mhs-card.filled {
+      border-color: var(--green-lt);
+    }
+    .mhs-card.filled .mhs-header {
+      border-left: 4px solid var(--green-lt);
+    }
+    .mhs-header {
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      border-left: 4px solid transparent;
+      transition: background 0.15s;
+    }
+    .mhs-header:hover { background: #fafafa; }
+    .mhs-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .mhs-info { flex: 1; min-width: 0; }
+    .mhs-nama {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--navy);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mhs-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mhs-nim { font-weight: 500; }
+    .dot { color: var(--border); }
 
-    .btn-detail{padding:5px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--navy);}
-    .btn-detail:hover{background:var(--border);}
-    .btn-pdf-dosen{padding:5px 10px;background:#dbeafe;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;color:#1e40af;}
-    .btn-pdf-dosen:hover{background:#bfdbfe;}
+    .status-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .status-pill.empty { background: #fef3c7; color: #92400e; }
+    .status-pill.saved { background: #d1fae5; color: #065f46; }
 
-    /* DETAIL PANEL */
-    .detail-panel{display:none;background:#fafbfc;border-top:1px solid var(--border);}
-    .detail-panel.show{display:block;}
-    .detail-inner{padding:16px 20px;}
-    .detail-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:12px;}
-    .mhs-table{width:100%;border-collapse:collapse;font-size:12px;}
-    .mhs-table th{background:#f3f4f6;padding:8px 10px;text-align:left;font-weight:600;color:var(--muted);}
-    .mhs-table td{padding:8px 10px;border-bottom:1px solid var(--border);}
-    .mhs-table tr:last-child td{border-bottom:none;}
+    .chevron {
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .mhs-card.open .chevron { transform: rotate(180deg); }
 
-    /* STATUS BADGE */
-    .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
-    .badge-juli{background:#d1fae5;color:#065f46;}
-    .badge-agustus{background:#fef3c7;color:#92400e;}
-    .badge-belum{background:#f3f4f6;color:#6b7280;}
-    .badge-progress{background:#dbeafe;color:#1e40af;}
+    /* ── FORM PANEL ── */
+    .form-panel {
+      display: none;
+      padding: 0 16px 16px;
+      border-top: 1px solid var(--border);
+      background: #fafbfc;
+    }
+    .mhs-card.open .form-panel { display: block; }
 
-    /* LOADING */
-    .loading-wrap{text-align:center;padding:60px 20px;color:var(--muted);}
-    .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
-    @keyframes spin{to{transform:rotate(360deg);}}
+    .judul-box {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: #fffbeb;
+      border: 1px dashed #f59e0b;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+    .judul-box .judul-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 4px;
+    }
+    .judul-box .judul-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .judul-box.empty-judul {
+      background: #fff7ed;
+      border-color: var(--accent);
+    }
 
-    /* TOAST */
-    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:white;padding:12px 20px;border-radius:99px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.25);transition:transform 0.3s ease;z-index:999;white-space:nowrap;}
-    .toast.show{transform:translateX(-50%) translateY(0);}
-    .toast.success{background:var(--green);}
-    .toast.error{background:var(--accent);}
+    .field-group {
+      margin-top: 14px;
+    }
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .field-label .req { color: var(--accent); }
 
-    /* LAST SEEN */
-    .last-seen{font-size:11px;color:var(--muted);}
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: white;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    select:focus, textarea:focus, input[type="text"]:focus {
+      border-color: var(--blue);
+    }
+    textarea { resize: vertical; min-height: 70px; }
+
+    .lainnya-field {
+      margin-top: 8px;
+      display: none;
+    }
+    .lainnya-field.show { display: block; }
+
+    /* ── STATUS CHIPS ── */
+    .chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: var(--text);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .chip:hover { border-color: var(--blue); color: var(--blue); }
+    .chip.selected {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+    }
+    .chip.chip-siap-juli.selected { background: var(--green); border-color: var(--green); }
+    .chip.chip-belum.selected { background: #6b7280; border-color: #6b7280; }
+
+    /* ── SUBMIT BTN ── */
+    .btn-submit {
+      width: 100%;
+      margin-top: 16px;
+      padding: 13px;
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover { background: var(--blue); }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { background: var(--muted); cursor: not-allowed; }
+    .btn-submit.saving { background: var(--muted); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--navy);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      transition: transform 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--green); }
+    .toast.error { background: var(--accent); }
+
+    /* ── LOADING & ERROR ── */
+    .loading-wrap {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-wrap {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .error-wrap .icon { font-size: 48px; margin-bottom: 12px; }
+    .error-wrap h2 { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .error-wrap p { font-size: 14px; color: var(--muted); }
+
+    /* ── SAVE ALL BTN (sticky bottom) ── */
+    .save-all-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: none;
+      z-index: 50;
+    }
+    .save-all-bar.visible { display: block; }
+    .btn-save-all {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      padding: 14px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-save-all:hover { background: var(--green-lt); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .dosen-stats { gap: 8px; }
+      .stat-item { padding: 8px 8px; }
+    }
+
+    /* ── RIWAYAT TERAKHIR ── */
+    .riwayat-box {
+      margin-top: 14px;
+      padding: 11px 13px;
+      background: #f0fdf4;
+      border: 1px solid var(--green-lt);
+      border-radius: 8px;
+      margin-bottom: 2px;
+    }
+    .riwayat-box .riwayat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .riwayat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 12px;
+    }
+    .riwayat-item {
+      font-size: 11px;
+    }
+    .riwayat-item .r-key {
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .riwayat-item .r-val {
+      color: var(--navy);
+      font-weight: 600;
+    }
+    .sesi-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f3e8ff;
+      color: #6b21a8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    /* ── MODAL TAMBAH MAHASISWA ── */
+    /* ── MODAL TAMBAH MAHASISWA ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-sheet {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 720px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px 20px 40px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 0 auto 20px;
+    }
+    .modal-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .modal-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .modal-field {
+      margin-bottom: 14px;
+    }
+    .modal-field .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .btn-modal-cancel {
+      width: 100%;
+      padding: 13px;
+      background: var(--bg);
+      color: var(--muted);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-tambah-mhs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 16px;
+      background: white;
+      border: 1.5px dashed var(--green-lt);
+      border-radius: 10px;
+      color: var(--green);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 4px;
+      transition: background 0.15s;
+    }
+    .btn-tambah-mhs:hover { background: #f0fdf4; }
+
   </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div class="login-wrap" id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo">TRK</div>
-    <h1>TRACKA Dashboard</h1>
-    <p>Masukkan kode akses WK I untuk melanjutkan</p>
-    <input class="login-input" type="password" id="adminPass" placeholder="Kode Akses" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <button class="btn-login" onclick="doLogin()">Masuk →</button>
-    <div class="login-err" id="loginErr">Kode akses salah. Coba lagi.</div>
+<header>
+  <div class="header-inner">
+    <div class="header-logo">TRK</div>
+    <div class="header-text">
+      <h1>TRACKA</h1>
+      <p>Tracking Aktivitas Akademik TA/Skripsi</p>
+    </div>
+    <div class="periode-badge" id="periodeBadge">—</div>
+    <button id="btnExportPDF" onclick="exportPDF()"
+      style="display:none;padding:7px 13px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:8px">
+      📄 Export PDF
+    </button>
   </div>
-</div>
+</header>
 
-<!-- DASHBOARD -->
-<div id="dashboardWrap" style="display:none">
-  <header>
-    <div class="header-inner">
-      <div class="header-logo">TRK</div>
-      <div class="header-text">
-        <h1>TRACKA — Dashboard WK I</h1>
-        <p id="headerSubtitle">Monitoring Progress TA/Skripsi</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-header btn-refresh" onclick="loadDashboard()">🔄 Refresh</button>
-        <button class="btn-header btn-export-all" onclick="exportAllPDF()">📄 Export Semua PDF</button>
-        <button class="btn-header btn-export-progress" onclick="exportLaporanProgress()">📊 Export Laporan Progress</button>
-      </div>
-    </div>
-  </header>
+<main id="mainContent">
+  <div class="loading-wrap" id="loadingState">
+    <div class="spinner"></div>
+    <p>Memuat data mahasiswa...</p>
+  </div>
+</main>
 
-  <main>
-    <div id="dashContent">
-      <div class="loading-wrap">
-        <div class="spinner"></div>
-        <p>Memuat data dashboard...</p>
-      </div>
-    </div>
-  </main>
+<div class="save-all-bar" id="saveAllBar">
+  <button class="btn-save-all" onclick="saveAll()">
+    💾 Simpan Semua Progress
+  </button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ============================================================
+// CONFIG
+// ============================================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyqHVuNaL1Cr3tIL8gZTvguAsWgppcxc0ZqdhRjctS1mah_gP6xhupUyVYKSkKu3jqe7Q/exec';
-const ADMIN_PASS = 'tracka2026';
-const BASE_URL = 'https://bipalytara-byte.github.io/TRACKA_Tracking-Aktifitas-Akademik-Skripsi-dan-TA/';
 
-const DOSEN_TOKENS = {
-  "Ahmad Fauzi Anggi Ariesta Kusuma, S.Kom., M.Kom.": "a6f3b77a",
-  "Dwi Astuti, S.Kom., M.Kom.": "f2a34e10",
-  "Farida Yunita, S.T., M.T.": "14fc2dab",
-  "Fatimah Nur Arifah, S.Kom., M.Kom.": "f47d94a0",
-  "Fatkhurrochman, S.Kom., M.Kom.": "8fb407d0",
-  "Gatot Susilo, S.Kom., M.Kom.": "08146cf2",
-  "Kanafi, S.Kom., M.Kom.": "5d0a883f",
-  "M. Lutfi Mahasinul A., S.T., M.Kom.": "69a9bebb",
-  "Moch. Ali Machmudi, S.Kom., M.Kom.": "d6499d22",
-  "Riska Dwi Handayani, S.Kom, M.Kom.": "e5909f95",
-  "Sri Waluyo, S.Pd., M.Pd.": "e8563987",
-  "Sugeng Wahyudiono, S.Kom., M.Kom.": "a1633893",
-  "Tri Yusnanto, S.Kom., M.Kom.": "49ea5d5d",
-  "Wahyu Priyoatmoko, S.Kom., M.Kom.": "1da43aec",
-  "Yeza Febriani, S.Si,, M.Sc.": "4936f825",
-  "Yusuf Wahyu Setiya Putra, S.Kom., M.Kom.": "b60e31f6"
-};
+const STATUS_PROGRESS = [
+  'Uji Validasi Judul',
+  'ACC Validasi Judul',
+  'Mengerjakkan Bab 1 - 3',
+  'Proses Ganti Judul',
+  'Proses Mencari Judul',
+  'Mengerjakkan Instrumen Penelitian',
+  'Validasi Akhir/Praktisi',
+  'Mengerjakkan Bab 4 - 5',
+  'Mengerjakkan Jurnal',
+  'ACC Pendadaran',
+  'Sudah Pendadaran',
+  'Lainnya'
+];
 
-let allMasterData = [];   // semua mahasiswa dari DATA_MAHASISWA
-let allProgressData = []; // semua progress dari PROGRESS
-let dosenSummary = [];    // summary per dosen
+const KENDALA_OPTIONS = [
+  'Tidak Ada Kendala',
+  'Kesulitan Teknis Penulisan',
+  'Data/Objek Penelitian Belum Lengkap',
+  'Sulit Ditemui / Jadwal Bentrok',
+  'Masalah Pribadi/Kesehatan',
+  'Revisi Berulang dari Pembimbing',
+  'Belum Mulai Mengerjakan',
+  'Lainnya'
+];
+
+const KESANGGUPAN = [
+  { label: '✅ Siap Juli', value: 'Siap Juli', cls: 'chip-siap-juli' },
+  { label: '❓ Belum Bisa Diprediksi', value: 'Belum Bisa Diprediksi', cls: 'chip-belum' }
+];
 
 // ============================================================
-// LOGIN
+// STATE
 // ============================================================
-function doLogin() {
-  const pass = document.getElementById('adminPass').value;
-  if (pass === ADMIN_PASS) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboardWrap').style.display = 'block';
-    loadDashboard();
-  } else {
-    document.getElementById('loginErr').style.display = 'block';
-  }
+let dosenNama = '';
+let dosenToken = '';
+let mahasiswaList = [];
+let progressData = {};  // nim -> progress TERBARU per mahasiswa
+let historyData = {};   // nim -> array semua sesi
+let formData = {};      // nim -> data form saat ini
+let periode = '';
+
+// Helper: tanggal hari ini dalam format yyyy-mm-dd, berdasarkan zona waktu LOKAL
+// (toISOString() mengonversi ke UTC, yang bisa salah tanggal antara jam 00:00-06:59 WIB)
+function getTodayLocal() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Helper: parse timestamp format 'dd/MM/yyyy HH:mm:ss' (dari GAS Utilities.formatDate)
+// menjadi objek Date yang valid untuk PERBANDINGAN, bukan perbandingan string langsung
+// (string compare bisa salah lintas bulan/tahun, misal "05/01/2027" vs "25/12/2026").
+function parseTimestamp(str) {
+  if (!str) return null;
+  const parts = String(str).trim().split(' ');
+  const datePart = parts[0];
+  const timePart = parts[1] || '00:00:00';
+  const [day, month, year] = datePart.split('/').map(Number);
+  const [hh, mm, ss] = timePart.split(':').map(Number);
+  if (!day || !month || !year) return null;
+  return new Date(year, month - 1, day, hh || 0, mm || 0, ss || 0);
 }
 
 // ============================================================
-// LOAD DASHBOARD DATA
+// INIT
 // ============================================================
-async function loadDashboard() {
-  document.getElementById('dashContent').innerHTML = `
-    <div class="loading-wrap"><div class="spinner"></div><p>Memuat data...</p></div>
-  `;
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  dosenToken = params.get('token') || '';
+  
+  // Set periode hari ini
+  const now = new Date();
+  periode = getTodayLocal(); // yyyy-mm-dd
+  const periodeLabel = now.toLocaleDateString('id-ID', { 
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+  });
+  document.getElementById('periodeBadge').textContent = periodeLabel;
 
+  if (!dosenToken) {
+    showError('Token tidak ditemukan', 'Pastikan kamu menggunakan link yang benar dari koordinator.');
+    return;
+  }
+
+  loadData();
+});
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+async function loadData() {
   try {
-    const [masterRes, progressRes] = await Promise.all([
-      callGAS({ action: 'getAllMaster' }),
-      callGAS({ action: 'getAllProgress' })
+    // Paralel: ambil mahasiswa + progress existing
+    const [mhsRes, progRes] = await Promise.all([
+      callGAS({ action: 'getMahasiswa', token: dosenToken }),
+      callGAS({ action: 'getProgress', token: dosenToken, periode: null })
     ]);
 
-    allMasterData   = masterRes.status === 'ok' ? masterRes.data : [];
-    allProgressData = progressRes.status === 'ok' ? progressRes.data : [];
-
-    buildSummary();
-    renderDashboard();
-
-    const now = new Date();
-    document.getElementById('headerSubtitle').textContent =
-      'Update: ' + now.toLocaleDateString('id-ID', {weekday:'long',day:'numeric',month:'long'}) +
-      ' ' + now.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
-
-  } catch(err) {
-    document.getElementById('dashContent').innerHTML = `
-      <div class="loading-wrap"><p>❌ Gagal memuat: ${err.message}</p></div>
-    `;
-  }
-}
-
-// ============================================================
-// BUILD SUMMARY PER DOSEN
-// ============================================================
-function buildSummary() {
-  dosenSummary = Object.keys(DOSEN_TOKENS).map(nama => {
-    const token = DOSEN_TOKENS[nama];
-
-    // Mahasiswa bimbingan dosen ini
-    const mahasiswa = allMasterData.filter(m =>
-      m.pb1 === nama || m.pb2 === nama
-    );
-    const totalMhs = mahasiswa.length;
-
-    // Progress dosen ini — ambil entri terbaru per mahasiswa
-    const progDosen = allProgressData.filter(p => p.dosenNama === nama);
-
-    // Unik NIM yang sudah punya entri progress
-    const nimDiisi = [...new Set(progDosen.map(p => String(p.nim)))];
-    const sudahDiisi = nimDiisi.length;
-
-    // Ambil progress terbaru per mahasiswa
-    const latestPerNim = {};
-    progDosen.forEach(p => {
-      const nim = String(p.nim);
-      if (!latestPerNim[nim] || p.timestamp > latestPerNim[nim].timestamp) {
-        latestPerNim[nim] = p;
-      }
-    });
-
-    const siapJuli = Object.values(latestPerNim).filter(p => p.kesanggupan === 'Siap Juli').length;
-    const siapAgustus = Object.values(latestPerNim).filter(p => p.kesanggupan === 'Siap Agustus').length;
-    const belumPrediksi = Object.values(latestPerNim).filter(p => p.kesanggupan === 'Belum Bisa Diprediksi').length;
-
-    // Total sesi bimbingan
-    const totalSesi = progDosen.length;
-
-    // Timestamp terakhir
-    const lastActivity = progDosen.length > 0
-      ? progDosen.reduce((a, b) => a.timestamp > b.timestamp ? a : b).timestamp
-      : null;
-
-    const pct = totalMhs > 0 ? Math.round((sudahDiisi / totalMhs) * 100) : 0;
-
-    return {
-      nama, token, totalMhs, sudahDiisi, pct,
-      siapJuli, siapAgustus, belumPrediksi,
-      totalSesi, lastActivity, mahasiswa,
-      latestPerNim, progDosen
-    };
-  });
-
-  // Sort: yang belum mengisi duluan
-  dosenSummary.sort((a, b) => a.pct - b.pct);
-}
-
-// ============================================================
-// RENDER DASHBOARD
-// ============================================================
-function renderDashboard() {
-  const totalMhs = allMasterData.length;
-  const totalDiisi = [...new Set(allProgressData.map(p => p.nim + '|' + p.dosenNama))].length;
-  const totalSiapJuli = dosenSummary.reduce((s, d) => s + d.siapJuli, 0);
-  const dosenAktif = dosenSummary.filter(d => d.sudahDiisi > 0).length;
-  const totalSesi = allProgressData.length;
-
-  let html = `
-    <!-- OVERVIEW -->
-    <div class="overview-grid">
-      <div class="ov-card">
-        <div class="num">${totalMhs}</div>
-        <div class="lbl">Total Mahasiswa</div>
-      </div>
-      <div class="ov-card">
-        <div class="num green">${totalDiisi}</div>
-        <div class="lbl">Sudah Dilaporkan</div>
-      </div>
-      <div class="ov-card">
-        <div class="num amber">${totalSiapJuli}</div>
-        <div class="lbl">Siap Maju Juli</div>
-      </div>
-      <div class="ov-card">
-        <div class="num purple">${dosenAktif}/16</div>
-        <div class="lbl">Dosen Aktif</div>
-      </div>
-    </div>
-
-    <!-- MONITORING TABEL -->
-    <div class="sec-header">
-      <h2>📋 Monitoring Per Dosen</h2>
-      <span style="font-size:12px;color:var(--muted)">${totalSesi} sesi bimbingan tercatat</span>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Dosen Pembimbing</th>
-            <th>Progress Pengisian</th>
-            <th>Siap Juli</th>
-            <th>Siap Agt</th>
-            <th>Sesi</th>
-            <th>Terakhir Aktif</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="dosenTableBody">
-  `;
-
-  dosenSummary.forEach((d, idx) => {
-    const dotClass = d.pct === 100 ? 'dot-green' : d.pct > 0 ? 'dot-amber' : 'dot-red';
-    const lastActive = d.lastActivity
-      ? new Date(d.lastActivity).toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
-      : '<span style="color:var(--accent)">Belum ada aktivitas</span>';
-    const namaShort = d.nama.split(',')[0];
-
-    html += `
-      <tr>
-        <td>
-          <span class="status-dot ${dotClass}"></span>
-          <strong>${namaShort}</strong>
-        </td>
-        <td>
-          <div class="pct-bar"><div class="pct-fill" style="width:${d.pct}%"></div></div>
-          ${d.sudahDiisi}/${d.totalMhs} (${d.pct}%)
-        </td>
-        <td><span class="badge badge-juli">${d.siapJuli}</span></td>
-        <td><span class="badge badge-agustus">${d.siapAgustus}</span></td>
-        <td style="color:var(--purple);font-weight:600">${d.totalSesi}x</td>
-        <td class="last-seen">${lastActive}</td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn-detail" onclick="toggleDetail(${idx})">👁 Detail</button>
-          <button class="btn-pdf-dosen" onclick="exportPDFDosen(${idx})">📄 PDF</button>
-        </td>
-      </tr>
-      <tr>
-        <td colspan="7" style="padding:0">
-          <div class="detail-panel" id="detail_${idx}">
-            <div class="detail-inner" id="detailContent_${idx}"></div>
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `</tbody></table></div>`;
-  document.getElementById('dashContent').innerHTML = html;
-}
-
-// ============================================================
-// TOGGLE DETAIL
-// ============================================================
-function toggleDetail(idx) {
-  const panel = document.getElementById('detail_' + idx);
-  const content = document.getElementById('detailContent_' + idx);
-  panel.classList.toggle('show');
-
-  if (panel.classList.contains('show') && !content.dataset.loaded) {
-    content.dataset.loaded = '1';
-    renderDetailDosen(idx, content);
-  }
-}
-
-function renderDetailDosen(idx, container) {
-  const d = dosenSummary[idx];
-  let html = `<div class="detail-title">Riwayat Bimbingan — ${d.nama.split(',')[0]}</div>`;
-
-  if (d.mahasiswa.length === 0) {
-    html += '<p style="color:var(--muted);font-size:13px">Tidak ada data mahasiswa.</p>';
-    container.innerHTML = html;
-    return;
-  }
-
-  html += `<table class="mhs-table">
-    <thead><tr>
-      <th>No</th><th>Nama Mahasiswa</th><th>NIM</th><th>Posisi</th>
-      <th>Sesi</th><th>Status Terbaru</th><th>Kesanggupan</th><th>Terakhir</th>
-    </tr></thead><tbody>`;
-
-  d.mahasiswa.forEach((m, i) => {
-    const nim = String(m.nim);
-    const latest = d.latestPerNim[nim];
-    const sesiCount = d.progDosen.filter(p => String(p.nim) === nim).length;
-    const posisiLabel = m.pb1 === d.nama ? 'Dosbing 1' : 'Dosbing 2';
-
-    const kesanggupanBadge = latest
-      ? (latest.kesanggupan === 'Siap Juli'
-          ? `<span class="badge badge-juli">Siap Juli</span>`
-          : latest.kesanggupan === 'Siap Agustus'
-          ? `<span class="badge badge-agustus">Siap Agt</span>`
-          : `<span class="badge badge-belum">Belum</span>`)
-      : '<span style="color:var(--accent);font-size:11px">Belum diisi</span>';
-
-    const statusBadge = latest
-      ? `<span class="badge badge-progress">${latest.statusProgress}</span>`
-      : '—';
-
-    const lastDate = latest
-      ? new Date(latest.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short'})
-      : '—';
-
-    html += `<tr>
-      <td>${i+1}</td>
-      <td><strong>${m.nama}</strong></td>
-      <td>${m.nim}</td>
-      <td>${posisiLabel}</td>
-      <td style="color:var(--purple);font-weight:600;text-align:center">${sesiCount}x</td>
-      <td>${statusBadge}</td>
-      <td>${kesanggupanBadge}</td>
-      <td class="last-seen">${lastDate}</td>
-    </tr>`;
-  });
-
-  html += '</tbody></table>';
-  container.innerHTML = html;
-}
-
-// ============================================================
-// EXPORT PDF — SATU DOSEN
-// ============================================================
-function exportPDFDosen(idx) {
-  const d = dosenSummary[idx];
-  showToast('⏳ Membuat PDF ' + d.nama.split(',')[0] + '...', '');
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-  const namaShort = d.nama.split(',')[0];
-  const now = new Date();
-  const tglCetak = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-
-  // Header
-  doc.setFillColor(26, 26, 46);
-  doc.rect(0, 0, 210, 35, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('TRACKA — Laporan Progress Bimbingan', 14, 14);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Pekan TRACKA 22–27 Juni 2026  |  BIPA', 14, 22);
-  doc.text('Dicetak: ' + tglCetak, 14, 29);
-
-  // Info dosen
-  doc.setTextColor(26, 26, 46);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Dosen Pembimbing:', 14, 45);
-  doc.setFont('helvetica', 'normal');
-  doc.text(d.nama, 14, 52);
-
-  // Summary cards
-  doc.setFillColor(240, 242, 245);
-  doc.roundedRect(14, 57, 40, 18, 3, 3, 'F');
-  doc.roundedRect(58, 57, 40, 18, 3, 3, 'F');
-  doc.roundedRect(102, 57, 40, 18, 3, 3, 'F');
-  doc.roundedRect(146, 57, 40, 18, 3, 3, 'F');
-
-  const cards = [
-    { label: 'Total Mhs', val: d.totalMhs, x: 14 },
-    { label: 'Dilaporkan', val: d.sudahDiisi, x: 58 },
-    { label: 'Siap Juli', val: d.siapJuli, x: 102 },
-    { label: 'Total Sesi', val: d.totalSesi, x: 146 },
-  ];
-  cards.forEach(c => {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(26, 26, 46);
-    doc.text(String(c.val), c.x + 20, 67, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(107, 114, 128);
-    doc.text(c.label, c.x + 20, 72, { align: 'center' });
-  });
-
-  // Tabel mahasiswa
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(26, 26, 46);
-  doc.text('Daftar Mahasiswa & Status Progress Terbaru', 14, 84);
-
-  const tableRows = d.mahasiswa.map((m, i) => {
-    const nim = String(m.nim);
-    const latest = d.latestPerNim[nim];
-    const sesi = d.progDosen.filter(p => String(p.nim) === nim).length;
-    return [
-      i + 1,
-      m.nama,
-      m.nim,
-      m.pb1 === d.nama ? 'PB1' : 'PB2',
-      latest ? latest.statusProgress : 'Belum diisi',
-      latest ? latest.kesanggupan : '—',
-      latest ? latest.topikBimbingan || '—' : '—',
-      sesi + 'x'
-    ];
-  });
-
-  doc.autoTable({
-    startY: 87,
-    head: [['No', 'Nama Mahasiswa', 'NIM', 'Pos', 'Status Progress', 'Kesanggupan', 'Topik Terakhir', 'Sesi']],
-    body: tableRows,
-    styles: { fontSize: 8, cellPadding: 3 },
-    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 8 },
-      1: { cellWidth: 42 },
-      2: { cellWidth: 18 },
-      3: { cellWidth: 10 },
-      4: { cellWidth: 35 },
-      5: { cellWidth: 28 },
-      6: { cellWidth: 38 },
-      7: { cellWidth: 10 }
-    },
-    alternateRowStyles: { fillColor: [248, 249, 250] },
-    didParseCell: function(data) {
-      if (data.section === 'body' && data.column.index === 5) {
-        const val = data.cell.raw;
-        if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
-        else if (val === 'Siap Agustus') data.cell.styles.textColor = [146, 64, 14];
-        else if (val === 'Belum diisi') data.cell.styles.textColor = [233, 69, 96];
-      }
-    }
-  });
-
-  // Riwayat sesi bimbingan
-  if (d.progDosen.length > 0) {
-    const finalY = doc.lastAutoTable.finalY + 8;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(26, 26, 46);
-    doc.text('Riwayat Sesi Bimbingan', 14, finalY);
-
-    const sesiRows = d.progDosen
-      .sort((a, b) => a.timestamp > b.timestamp ? 1 : -1)
-      .map(p => [
-        p.tglBimbingan || p.periode,
-        'Ke-' + (p.bimbinganKe || '?'),
-        p.namaMahasiswa,
-        p.topikBimbingan || '—',
-        p.statusProgress,
-        p.kesanggupan,
-        p.catatanDosen || '—'
-      ]);
-
-    doc.autoTable({
-      startY: finalY + 3,
-      head: [['Tanggal', 'Sesi', 'Mahasiswa', 'Topik', 'Status', 'Kesanggupan', 'Catatan']],
-      body: sesiRows,
-      styles: { fontSize: 7.5, cellPadding: 2.5 },
-      headStyles: { fillColor: [45, 106, 79], textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 12 },
-        2: { cellWidth: 40 },
-        3: { cellWidth: 35 },
-        4: { cellWidth: 33 },
-        5: { cellWidth: 25 },
-        6: { cellWidth: 30 }
-      },
-      alternateRowStyles: { fillColor: [248, 249, 250] }
-    });
-  }
-
-  // Footer
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text('TRACKA — BIPA | Halaman ' + i + ' dari ' + pageCount, 14, 290);
-    doc.text('Dicetak: ' + tglCetak, 196, 290, { align: 'right' });
-  }
-
-  const filename = 'TRACKA_' + namaShort.replace(/\s+/g, '_') + '_' +
-    now.toISOString().split('T')[0] + '.pdf';
-  doc.save(filename);
-  showToast('✅ PDF ' + namaShort.split(' ')[0] + ' berhasil diunduh!', 'success');
-}
-
-// ============================================================
-// EXPORT PDF — SEMUA DOSEN
-// ============================================================
-async function exportAllPDF() {
-  showToast('⏳ Membuat PDF semua dosen...', '');
-  for (let i = 0; i < dosenSummary.length; i++) {
-    await new Promise(r => setTimeout(r, 300));
-    exportPDFDosen(i);
-  }
-  setTimeout(() => showToast('✅ Semua PDF berhasil diunduh!', 'success'), 1000);
-}
-
-// ============================================================
-// EXPORT PDF — LAPORAN PROGRESS GABUNGAN (Admin / WK I)
-// Satu file PDF berisi ringkasan + rekap semua dosen + detail
-// per dosen. Murni progress, BUKAN evaluasi kinerja dosen.
-// ============================================================
-function exportLaporanProgress() {
-  if (!allProgressData.length) {
-    showToast('Belum ada data progress untuk diexport!', 'error');
-    return;
-  }
-  showToast('⏳ Membuat Laporan Progress...', '');
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const now = new Date();
-  const tglCetak = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-  // ---------- Helper: header tiap halaman baru ----------
-  function pageHeader(title, subtitle) {
-    doc.setFillColor(26, 26, 46);
-    doc.rect(0, 0, 210, 32, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
-    doc.text(title, 14, 13);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(subtitle, 14, 20);
-    doc.text('Dicetak: ' + tglCetak, 14, 26);
-    doc.setFillColor(233, 69, 96);
-    doc.rect(0, 32, 210, 1.5, 'F');
-  }
-
-  const SUBTITLE = 'Laporan Progress Bimbingan TA/Skripsi | BIPA Magelang';
-
-  // ============================================================
-  // HALAMAN 1 — RINGKASAN KESELURUHAN
-  // ============================================================
-  pageHeader('TRACKA — Laporan Progress Bimbingan (Gabungan)', SUBTITLE);
-
-  const totalSesi = allProgressData.length;
-  const totalDosenAktif = dosenSummary.filter(d => d.totalSesi > 0).length;
-  const totalMhsDilaporkan = new Set(allProgressData.map(p => String(p.nim))).size;
-
-  // Kesanggupan terbaru per mahasiswa (gabungan semua dosen)
-  const latestGlobal = {};
-  allProgressData.forEach(p => {
-    const key = String(p.nim) + '|' + p.dosenNama;
-    if (!latestGlobal[key] || p.timestamp > latestGlobal[key].timestamp) {
-      latestGlobal[key] = p;
-    }
-  });
-  const latestArr = Object.values(latestGlobal);
-  const cSiapJuli = latestArr.filter(p => p.kesanggupan === 'Siap Juli').length;
-  const cBelumPrediksi = latestArr.filter(p => p.kesanggupan === 'Belum Bisa Diprediksi').length;
-
-  // Kendala lancar vs ada kendala
-  const cLancar = allProgressData.filter(p => p.kendalaUtama === 'Tidak Ada Kendala').length;
-  const cTerisiKendala = allProgressData.filter(p => p.kendalaUtama && p.kendalaUtama !== '').length;
-  const pctLancar = cTerisiKendala ? Math.round((cLancar / cTerisiKendala) * 100) : 0;
-
-  doc.setTextColor(26, 26, 46);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('Ringkasan Periode Pekan TRACKA Ini', 14, 42);
-
-  // Summary cards baris 1: aktivitas
-  const cards1 = [
-    { label: 'Total Sesi', val: totalSesi, x: 14 },
-    { label: 'Dosen Aktif', val: totalDosenAktif, x: 58 },
-    { label: 'Mhs Dilaporkan', val: totalMhsDilaporkan, x: 102 },
-    { label: '% Sesi Lancar', val: pctLancar + '%', x: 146 },
-  ];
-  cards1.forEach(c => {
-    doc.setFillColor(240, 242, 245);
-    doc.roundedRect(c.x, 47, 40, 18, 3, 3, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(26, 26, 46);
-    doc.text(String(c.val), c.x + 20, 57, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(107, 114, 128);
-    doc.text(c.label, c.x + 20, 62, { align: 'center' });
-  });
-
-  // Summary cards baris 2: kesanggupan
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(26, 26, 46);
-  doc.text('Kesanggupan Mahasiswa (status terakhir per mahasiswa per dosen)', 14, 76);
-
-  const cards2 = [
-    { label: 'Siap Juli', val: cSiapJuli, x: 14, color: [45, 106, 79] },
-    { label: 'Belum Bisa Diprediksi', val: cBelumPrediksi, x: 58, color: [233, 69, 96] },
-    { label: 'Belum Diisi', val: latestArr.length - cSiapJuli - cBelumPrediksi, x: 102, color: [107, 114, 128] },
-  ];
-  cards2.forEach(c => {
-    doc.setFillColor(240, 242, 245);
-    doc.roundedRect(c.x, 81, 40, 18, 3, 3, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(c.color[0], c.color[1], c.color[2]);
-    doc.text(String(c.val), c.x + 20, 91, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(107, 114, 128);
-    doc.text(c.label, c.x + 20, 96, { align: 'center' });
-  });
-
-  // ---------- Tabel rekap tahapan progress ----------
-  const statusCount = {};
-  allProgressData.forEach(p => {
-    const s = p.statusProgress || 'Belum Diisi';
-    statusCount[s] = (statusCount[s] || 0) + 1;
-  });
-  const statusRows = Object.entries(statusCount)
-    .sort((a, b) => b[1] - a[1])
-    .map(([s, c]) => [s, c, Math.round((c / totalSesi) * 100) + '%']);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(26, 26, 46);
-  doc.text('Rekap Tahapan Progress (seluruh sesi)', 14, 108);
-
-  doc.autoTable({
-    startY: 111,
-    head: [['Tahapan / Status Progress', 'Jumlah Sesi', '%']],
-    body: statusRows,
-    styles: { fontSize: 8, cellPadding: 2.5 },
-    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 249, 250] },
-  });
-
-  // ---------- Tabel rekap kendala ----------
-  const kendalaCount = {};
-  allProgressData.forEach(p => {
-    const k = p.kendalaUtama || 'Belum Diisi';
-    kendalaCount[k] = (kendalaCount[k] || 0) + 1;
-  });
-  const kendalaRows = Object.entries(kendalaCount)
-    .sort((a, b) => b[1] - a[1])
-    .map(([k, c]) => [k, c, Math.round((c / totalSesi) * 100) + '%']);
-
-  const finalY1 = doc.lastAutoTable.finalY + 8;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(26, 26, 46);
-  doc.text('Rekap Kendala Bimbingan (seluruh sesi)', 14, finalY1);
-
-  doc.autoTable({
-    startY: finalY1 + 3,
-    head: [['Kategori Kendala', 'Jumlah Sesi', '%']],
-    body: kendalaRows,
-    styles: { fontSize: 8, cellPadding: 2.5 },
-    headStyles: { fillColor: [45, 106, 79], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 249, 250] },
-  });
-
-  // ============================================================
-  // HALAMAN 2 — TABEL AKTIVITAS SEMUA DOSEN
-  // ============================================================
-  doc.addPage();
-  pageHeader('TRACKA — Aktivitas Bimbingan per Dosen', SUBTITLE);
-
-  const dosenRows = [...dosenSummary]
-    .sort((a, b) => b.totalSesi - a.totalSesi)
-    .map((d, i) => [
-      i + 1,
-      d.nama,
-      d.totalSesi,
-      d.totalMhs,
-      d.siapJuli,
-      d.belumPrediksi,
-    ]);
-
-  doc.autoTable({
-    startY: 40,
-    head: [['#', 'Nama Dosen', 'Total Sesi', 'Mhs Dibimbing', 'Siap Juli', 'Belum Diprediksi']],
-    body: dosenRows,
-    styles: { fontSize: 8, cellPadding: 3 },
-    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 249, 250] },
-    columnStyles: {
-      0: { cellWidth: 8 },
-      1: { cellWidth: 62 },
-    }
-  });
-  doc.setFontSize(7.5);
-  doc.setTextColor(150);
-  doc.text('Catatan: tabel ini murni rekap aktivitas & progress, bukan penilaian kinerja dosen pembimbing.', 14, doc.lastAutoTable.finalY + 6);
-
-  // ============================================================
-  // HALAMAN PER DOSEN — detail mahasiswa & kesanggupan
-  // ============================================================
-  [...dosenSummary]
-    .sort((a, b) => b.totalSesi - a.totalSesi)
-    .forEach(d => {
-      if (d.totalSesi === 0) return; // skip dosen tanpa aktivitas pada periode ini
-
-      doc.addPage();
-      pageHeader('TRACKA — Profil Progress: ' + d.nama.split(',')[0], SUBTITLE);
-
-      doc.setTextColor(26, 26, 46);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text(d.nama, 14, 42);
-
-      const cards = [
-        { label: 'Total Mhs', val: d.totalMhs, x: 14 },
-        { label: 'Dilaporkan', val: d.sudahDiisi, x: 58 },
-        { label: 'Total Sesi', val: d.totalSesi, x: 102 },
-        { label: 'Belum Diprediksi', val: d.belumPrediksi, x: 146 },
-      ];
-      cards.forEach(c => {
-        doc.setFillColor(240, 242, 245);
-        doc.roundedRect(c.x, 47, 40, 16, 3, 3, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(13);
-        doc.setTextColor(26, 26, 46);
-        doc.text(String(c.val), c.x + 20, 56, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor(107, 114, 128);
-        doc.text(c.label, c.x + 20, 61, { align: 'center' });
-      });
-
-      const tableRows = d.mahasiswa.map((m, i) => {
-        const nim = String(m.nim);
-        const latest = d.latestPerNim[nim];
-        const sesi = d.progDosen.filter(p => String(p.nim) === nim).length;
-        return [
-          i + 1,
-          m.nama,
-          m.nim,
-          m.pb1 === d.nama ? 'PB1' : 'PB2',
-          latest ? latest.statusProgress : 'Belum diisi',
-          latest ? (latest.kesanggupan || '—') : '—',
-          latest ? (latest.kendalaUtama || '—') : '—',
-          sesi + 'x'
-        ];
-      });
-
-      doc.autoTable({
-        startY: 69,
-        head: [['No', 'Nama Mahasiswa', 'NIM', 'Pos', 'Status Progress', 'Kesanggupan', 'Kendala', 'Sesi']],
-        body: tableRows,
-        styles: { fontSize: 7.5, cellPadding: 2.5 },
-        headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [248, 249, 250] },
-        columnStyles: {
-          0: { cellWidth: 7 },
-          1: { cellWidth: 38 },
-          2: { cellWidth: 16 },
-          3: { cellWidth: 9 },
-          4: { cellWidth: 32 },
-          5: { cellWidth: 30 },
-          6: { cellWidth: 32 },
-          7: { cellWidth: 10 }
-        },
-        didParseCell: function (data) {
-          if (data.section === 'body' && data.column.index === 5) {
-            const val = data.cell.raw;
-            if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
-            else if (val === 'Belum Bisa Diprediksi') data.cell.styles.textColor = [233, 69, 96];
-          }
+    if (mhsRes.status !== 'ok') throw new Error(mhsRes.message);
+    
+    dosenNama = mhsRes.dosen;
+    mahasiswaList = mhsRes.mahasiswa || [];
+
+    // Ambil progress TERBARU per mahasiswa (dari semua periode)
+    // progressData[nim] = entri paling baru
+    if (progRes.status === 'ok' && progRes.data) {
+      progRes.data.forEach(p => {
+        const nim = String(p.nim);
+        const pTime = parseTimestamp(p.timestamp);
+        const existingTime = progressData[nim] ? parseTimestamp(progressData[nim].timestamp) : null;
+        if (!progressData[nim] || (pTime && existingTime && pTime > existingTime) || (pTime && !existingTime)) {
+          progressData[nim] = p;
         }
       });
-    });
+    }
+    
+    // historyData[nim] = array semua sesi (untuk counter)
+    historyData = {};
+    if (progRes.status === 'ok' && progRes.data) {
+      progRes.data.forEach(p => {
+        const nim = String(p.nim);
+        if (!historyData[nim]) historyData[nim] = [];
+        historyData[nim].push(p);
+      });
+    }
 
-  // ============================================================
-  // FOOTER SEMUA HALAMAN
-  // ============================================================
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text('TRACKA — BIPA | Halaman ' + i + ' dari ' + pageCount, 14, 290);
-    doc.text('Dicetak: ' + tglCetak, 196, 290, { align: 'right' });
+    renderUI();
+  } catch(err) {
+    showError('Gagal memuat data', err.message || 'Periksa koneksi internet kamu.');
   }
-
-  const filename = 'TRACKA_Laporan_Progress_Gabungan_' + now.toISOString().split('T')[0] + '.pdf';
-  doc.save(filename);
-  showToast('✅ Laporan Progress gabungan berhasil diunduh!', 'success');
 }
 
 // ============================================================
-// GAS API — tambah getAllMaster & getAllProgress
+// RENDER UI
+// ============================================================
+function renderUI() {
+  const main = document.getElementById('mainContent');
+  
+  const totalMhs = mahasiswaList.length;
+  // Sudah diisi = pernah ada sesi bimbingan minimal 1x
+  const sudahDiisi = mahasiswaList.filter(m => historyData[String(m.nim)] && historyData[String(m.nim)].length > 0).length;
+  const totalSesi = Object.values(historyData).reduce((s, arr) => s + arr.length, 0);
+  const pct = totalMhs > 0 ? Math.round((sudahDiisi / totalMhs) * 100) : 0;
+
+  // Pisah dosbing 1 dan 2
+  const pb1List = mahasiswaList.filter(m => m.posisi === 'Pembimbing 1');
+  const pb2List = mahasiswaList.filter(m => m.posisi === 'Pembimbing 2');
+
+  let html = `
+    <div class="dosen-card">
+      <div class="label">Dosen Pembimbing</div>
+      <div class="nama">${dosenNama}</div>
+      <div class="dosen-stats">
+        <div class="stat-item">
+          <div class="num">${totalMhs}</div>
+          <div class="lbl">Total Mahasiswa</div>
+        </div>
+        <div class="stat-item">
+          <div class="num green">${sudahDiisi}</div>
+          <div class="lbl">Terlaporkan</div>
+        </div>
+        <div class="stat-item">
+          <div class="num amber">${totalMhs - sudahDiisi}</div>
+          <div class="lbl">Belum Ada Sesi</div>
+        </div>
+        <div class="stat-item">
+          <div class="num" style="color:var(--purple)">${totalSesi}</div>
+          <div class="lbl">Total Sesi</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill" style="width:${pct}%"></div>
+        </div>
+        <div class="progress-bar-label">
+          <span>Progress pengisian</span>
+          <span id="pctLabel">${pct}%</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (pb1List.length > 0) {
+    html += `
+      <div class="section-header">
+        <h2>Pembimbing 1</h2>
+        <span class="badge-count">${pb1List.length}</span>
+      </div>
+    `;
+    pb1List.forEach(m => { html += renderMhsCard(m, 'p1'); });
+  }
+
+  if (pb2List.length > 0) {
+    html += `
+      <div class="section-header">
+        <h2>Pembimbing 2</h2>
+        <span class="badge-count">${pb2List.length}</span>
+      </div>
+    `;
+    pb2List.forEach(m => { html += renderMhsCard(m, 'p2'); });
+  }
+
+  // Tombol tambah mahasiswa baru
+  html += `
+    <div class="section-header" style="margin-top:28px">
+      <h2>Mahasiswa Belum Terdaftar?</h2>
+    </div>
+    <button class="btn-tambah-mhs" onclick="openModal()">
+      ➕ Tambah Mahasiswa Baru
+    </button>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">
+      Gunakan fitur ini hanya untuk mahasiswa yang belum ada di daftar
+    </p>
+  `;
+
+  main.innerHTML = html;
+
+  // Init form state — SETIAP sesi baru harus mulai dari kosong (kecuali tglBimbingan
+  // yang default ke hari ini). Nilai dari `existing` (sesi sebelumnya) HANYA dipakai
+  // untuk ditampilkan di kotak "Sesi Terakhir" (read-only), tidak pernah untuk
+  // mengisi field input sesi baru — supaya dosen tidak salah kira field sudah terisi.
+  mahasiswaList.forEach(m => {
+    const existing = progressData[String(m.nim)];
+    formData[String(m.nim)] = {
+      tglBimbingan: getTodayLocal(),
+      bimbinganKe: '',
+      topikBimbingan: '',
+      statusProgress: '', progressDetail: '',
+      kendalaUtama: '', kendalaDetail: '',
+      kesanggupan: '', catatanDosen: '', judulBaru: ''
+    };
+    if (existing) {
+      // Pre-fill form elements (saat ini hanya tglBimbingan yang di-set di dalamnya)
+      prefillForm(m.nim, existing);
+    }
+  });
+
+  document.getElementById('saveAllBar').classList.add('visible');
+  // Tampilkan tombol export PDF di header
+  document.getElementById('btnExportPDF').style.display = 'block';
+}
+
+function renderMhsCard(m, posisiCls) {
+  const nim = String(m.nim);
+  const existing = progressData[nim];
+  const isFilled = !!existing;
+  const initials = m.nama.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const judulEmpty = !m.judul || m.judul.trim() === '';
+
+  const statusPill = isFilled
+    ? `<span class="status-pill saved">✓ Tersimpan</span>`
+    : `<span class="status-pill empty">Belum diisi</span>`;
+
+  const judulHtml = judulEmpty
+    ? `<div class="judul-box empty-judul" id="judulBox_${nim}">
+        <div class="judul-label">⚠️ Judul belum ada — isi di bawah</div>
+       </div>`
+    : `<div class="judul-box" id="judulBox_${nim}">
+        <div class="judul-label">Judul TA/Skripsi</div>
+        <div class="judul-text" id="judulText_${nim}">${m.judul}</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button type="button" class="btn-edit-judul" onclick="toggleEditJudul('${nim}')"
+            style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer">✏️ Edit Judul</button>
+          <button type="button" class="btn-riwayat-judul" onclick="lihatRiwayatJudul('${nim}')"
+            style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer">📜 Riwayat</button>
+        </div>
+        <div id="editJudulBox_${nim}" style="display:none;margin-top:10px">
+          <textarea id="judulEditInput_${nim}" rows="2"
+            placeholder="Tulis judul baru (judul sebelumnya akan tercatat di riwayat)..."
+            style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none"
+            oninput="updateField('${nim}', 'judulBaru', this.value)">${m.judul}</textarea>
+          <div style="margin-top:6px;font-size:11px;color:var(--muted)">
+            ℹ️ Perubahan tersimpan saat Anda klik "Simpan" di bawah. Tidak otomatis dilaporkan ke BAAK.
+          </div>
+        </div>
+        <div id="riwayatJudulBox_${nim}" style="display:none;margin-top:10px;font-size:12px"></div>
+       </div>`;
+
+  // Build status progress options — SENGAJA tidak auto-select dari sesi sebelumnya.
+  // Dosen harus memilih ulang dari kosong ("— Pilih status —") untuk setiap sesi baru.
+  const statusOpts = STATUS_PROGRESS.map(s =>
+    `<option value="${s}">${s}</option>`
+  ).join('');
+
+  // Build kendala options — sama, tidak auto-select dari sesi sebelumnya.
+  const kendalaOpts = KENDALA_OPTIONS.map(k =>
+    `<option value="${k}">${k}</option>`
+  ).join('');
+
+  // Build kesanggupan chips — SENGAJA tidak auto-select dari sesi sebelumnya.
+  const kesanggupanChips = KESANGGUPAN.map(k =>
+    `<div class="chip ${k.cls}"
+      onclick="selectChip(this, '${nim}', 'kesanggupan', '${k.value}')">${k.label}</div>`
+  ).join('');
+
+  // Tanggal hari ini format yyyy-mm-dd (zona waktu lokal, bukan UTC)
+  const today = getTodayLocal();
+  // PENTING: isi formData juga, bukan cuma value HTML — kalau dosen tidak pernah
+  // menyentuh field tanggal, formData[nim].tglBimbingan harus tetap terisi default
+  // hari ini, supaya validasi saveSingle() tidak salah mendeteksi "belum diisi".
+  if (!formData[nim]) formData[nim] = {};
+  if (!formData[nim].tglBimbingan) formData[nim].tglBimbingan = today;
+  // SENGAJA selalu false — textarea "Lainnya" untuk sesi baru harus tertutup di awal,
+  // tidak ikut terbuka karena status sesi SEBELUMNYA kebetulan "Lainnya".
+  const showLainnya = '';
+  const showKendalaLainnya = '';
+  // Hitung total sesi mahasiswa ini
+  const sesiCount = historyData[nim] ? historyData[nim].length : 0;
+
+  return `
+    <div class="mhs-card ${isFilled ? 'filled' : ''}" id="card_${nim}">
+      <div class="mhs-header" onclick="toggleCard('${nim}')">
+        <div class="mhs-avatar">${initials}</div>
+        <div class="mhs-info">
+          <div class="mhs-nama">${m.nama}</div>
+          <div class="mhs-meta">
+            <span class="mhs-nim">${m.nim}</span>
+            <span class="dot">·</span>
+            <span>${m.prodi}</span>
+          </div>
+          <div class="mhs-meta" style="margin-top:4px">
+            ${statusPill}
+            ${existing ? `<span class="status-pill saved" style="background:#dbeafe;color:#1e40af">${existing.statusProgress}</span>` : ''}
+            ${sesiCount > 0 ? `<span class="sesi-count-badge">🔄 ${sesiCount}x sesi</span>` : ''}
+          </div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+
+      <div class="form-panel" id="panel_${nim}">
+        ${judulHtml}
+
+        ${sesiCount > 0 && existing ? `
+        <div class="riwayat-box">
+          <div class="riwayat-label">📋 Sesi Terakhir (${existing.tglBimbingan || existing.periode || '—'}  •  Bimbingan ke-${existing.bimbinganKe || '?'})</div>
+          <div class="riwayat-grid">
+            <div class="riwayat-item">
+              <div class="r-key">Status Progress</div>
+              <div class="r-val">${existing.statusProgress || '—'}</div>
+            </div>
+            <div class="riwayat-item">
+              <div class="r-key">Kesanggupan</div>
+              <div class="r-val">${existing.kesanggupan || '—'}</div>
+            </div>
+            <div class="riwayat-item">
+              <div class="r-key">Topik</div>
+              <div class="r-val">${existing.topikBimbingan || '—'}</div>
+            </div>
+            <div class="riwayat-item">
+              <div class="r-key">Kendala</div>
+              <div class="r-val">${existing.kendalaUtama || '—'}</div>
+            </div>
+            ${existing.catatanDosen ? `<div class="riwayat-item" style="grid-column:1/-1">
+              <div class="r-key">Catatan</div>
+              <div class="r-val">${existing.catatanDosen}</div>
+            </div>` : ''}
+          </div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--muted);margin:6px 0 2px">
+          ↓ Isi form untuk sesi bimbingan baru ↓
+        </div>
+        ` : ''}
+
+        ${judulEmpty ? `
+        <div class="field-group">
+          <div class="field-label">📝 Isi Judul TA/Skripsi <span class="req">*</span></div>
+          <textarea id="judulInput_${nim}" placeholder="Tulis judul lengkap mahasiswa..." rows="2"
+            oninput="updateField('${nim}', 'judulBaru', this.value)">${existing && existing.judul ? existing.judul : ''}</textarea>
+        </div>
+        ` : ''}
+
+        <div class="field-group" style="display:flex;gap:10px">
+          <div style="flex:1">
+            <div class="field-label">📅 Tanggal Bimbingan <span class="req">*</span></div>
+            <input type="date" id="tglBimbingan_${nim}"
+              value="${today}"
+              oninput="updateField('${nim}','tglBimbingan',this.value)"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none" />
+          </div>
+          <div style="flex:1">
+            <div class="field-label">🔢 Bimbingan Ke-</div>
+            <input type="number" id="bimbinganKe_${nim}" min="1"
+              oninput="updateField('${nim}','bimbinganKe',this.value)"
+              placeholder="Auto"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">💡 Topik Bimbingan <span class="req">*</span></div>
+          <input type="text" id="topikBimbingan_${nim}"
+            placeholder="Contoh: Review Bab 3, Perbaikan metodologi..."
+            oninput="updateField('${nim}','topikBimbingan',this.value)" />
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">📊 Status Progress <span class="req">*</span></div>
+          <select id="statusProgress_${nim}"
+            onchange="updateField('${nim}','statusProgress',this.value); toggleLainnya('${nim}', this.value)">
+            <option value="">— Pilih status —</option>
+            ${statusOpts}
+          </select>
+          <div class="lainnya-field ${showLainnya}" id="lainnyaProgress_${nim}">
+            <input type="text" id="progressDetail_${nim}"
+              placeholder="Jelaskan progress secara singkat..."
+              oninput="updateField('${nim}','progressDetail',this.value)" />
+          </div>
+        </div>
+
+
+        <div class="field-group">
+          <div class="field-label">⚠️ Kendala Utama <span class="req">*</span></div>
+          <select id="kendalaUtama_${nim}"
+            onchange="updateField('${nim}','kendalaUtama',this.value); toggleKendalaLainnya('${nim}', this.value)">
+            <option value="">— Pilih kendala —</option>
+            ${kendalaOpts}
+          </select>
+          <div class="lainnya-field ${showKendalaLainnya}" id="lainnyaKendala_${nim}">
+            <input type="text" id="kendalaDetail_${nim}"
+              placeholder="Jelaskan kendala secara singkat..."
+              oninput="updateField('${nim}','kendalaDetail',this.value)" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">🎯 Kesanggupan Pendadaran <span class="req">*</span></div>
+          <div class="chips-wrap" id="kesanggupan_${nim}">
+            ${kesanggupanChips}
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">💬 Catatan Dosen <span style="color:var(--muted);font-weight:400">(opsional)</span></div>
+          <textarea id="catatanDosen_${nim}" placeholder="Catatan khusus, kondisi mahasiswa, dll..."
+            oninput="updateField('${nim}','catatanDosen',this.value)"></textarea>
+        </div>
+
+        <button class="btn-submit" id="btnSave_${nim}"
+          data-nim="${nim}"
+          data-nama="${m.nama.replace(/'/g, "\'").replace(/"/g, '&quot;')}"
+          data-prodi="${m.prodi}"
+          data-posisi="${m.posisi}"
+          onclick="saveSingleBtn(this)">
+          💾 Simpan Progress
+        </button>
+        <button type="button" class="btn-hapus-bimbingan" data-nim="${nim}"
+          data-nama="${m.nama.replace(/'/g, "\'").replace(/"/g, '&quot;')}"
+          onclick="hapusDariBimbinganBtn(this)"
+          style="width:100%;margin-top:8px;padding:9px;border:1px solid #fecaca;border-radius:8px;background:#fff5f5;color:#dc2626;font-size:12px;cursor:pointer">
+          🗑️ Bukan Mahasiswa Bimbingan Saya — Hapus
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function toggleCard(nim) {
+  const card = document.getElementById('card_' + nim);
+  card.classList.toggle('open');
+}
+
+function updateField(nim, field, value) {
+  if (!formData[nim]) formData[nim] = {};
+  formData[nim][field] = value;
+}
+
+// ============================================================
+// EDIT JUDUL (untuk judul yang SUDAH ADA, bukan yang kosong)
+// ============================================================
+function toggleEditJudul(nim) {
+  const box = document.getElementById('editJudulBox_' + nim);
+  if (!box) return;
+  const showing = box.style.display !== 'none';
+  box.style.display = showing ? 'none' : 'block';
+  if (showing) {
+    // Batal edit — kosongkan judulBaru supaya tidak ikut tersimpan kalau dosen klik Simpan
+    if (formData[nim]) formData[nim].judulBaru = '';
+  }
+}
+
+// ============================================================
+// RIWAYAT JUDUL — tampilkan histori perubahan judul mahasiswa
+// ============================================================
+async function lihatRiwayatJudul(nim) {
+  const box = document.getElementById('riwayatJudulBox_' + nim);
+  if (!box) return;
+
+  const showing = box.style.display !== 'none';
+  if (showing) {
+    box.style.display = 'none';
+    return;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML = '<span style="color:var(--muted)">⏳ Memuat riwayat...</span>';
+
+  try {
+    const res = await callGAS({ action: 'getRiwayatJudul', nim: nim });
+    if (res.status !== 'ok') throw new Error(res.message || 'Gagal memuat riwayat');
+
+    if (!res.data || res.data.length === 0) {
+      box.innerHTML = '<span style="color:var(--muted)">Belum ada riwayat perubahan judul untuk mahasiswa ini.</span>';
+      return;
+    }
+
+    // Urutkan terbaru dulu
+    const sorted = [...res.data].sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+
+    box.innerHTML = `
+      <div style="border-top:1px solid var(--border);padding-top:8px">
+        <div style="font-weight:600;margin-bottom:6px;color:var(--ink)">📜 Riwayat Perubahan Judul</div>
+        ${sorted.map(r => `
+          <div style="margin-bottom:8px;padding:8px;background:#f9fafb;border-radius:6px">
+            <div style="color:var(--muted);font-size:11px">${r.timestamp} — oleh ${r.diubahOleh}</div>
+            <div style="margin-top:4px"><s style="color:#9ca3af">${r.judulLama || '(kosong)'}</s></div>
+            <div style="margin-top:2px;color:var(--ink)">→ ${r.judulBaru}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (err) {
+    box.innerHTML = '<span style="color:var(--accent)">Gagal memuat riwayat: ' + err.message + '</span>';
+  }
+}
+
+// ============================================================
+// HAPUS MAHASISWA DARI DAFTAR BIMBINGAN (bukan hapus dari sistem)
+// ============================================================
+async function hapusDariBimbinganBtn(btn) {
+  const nim = btn.dataset.nim;
+  const nama = btn.dataset.nama;
+
+  const confirmed = confirm(
+    `Yakin "${nama}" (NIM ${nim}) BUKAN mahasiswa bimbingan Anda?\n\n` +
+    `Mahasiswa ini akan dihapus dari daftar bimbingan Anda saja. ` +
+    `Data mahasiswa tidak akan hilang dari sistem, dan pembimbing lain (jika ada) tidak terpengaruh.`
+  );
+  if (!confirmed) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Menghapus...';
+
+  try {
+    const res = await callGAS({
+      action: 'deleteMahasiswaDariBimbingan',
+      token: dosenToken,
+      nim: nim
+    });
+    if (res.status !== 'ok') throw new Error(res.message);
+
+    // Hapus dari daftar lokal & re-render
+    mahasiswaList = mahasiswaList.filter(m => String(m.nim) !== String(nim));
+    delete formData[nim];
+    delete progressData[nim];
+    delete historyData[nim];
+
+    showToast('✅ ' + nama.split(' ')[0] + ' dihapus dari daftar bimbingan Anda', 'success');
+    renderUI();
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '🗑️ Bukan Mahasiswa Bimbingan Saya — Hapus';
+  }
+}
+
+function selectChip(el, nim, field, value) {
+  const wrap = document.getElementById(field + '_' + nim);
+  wrap.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  updateField(nim, field, value);
+}
+
+function toggleLainnya(nim, value) {
+  const el = document.getElementById('lainnyaProgress_' + nim);
+  if (el) el.classList.toggle('show', value === 'Lainnya');
+}
+
+function toggleKendalaLainnya(nim, value) {
+  const el = document.getElementById('lainnyaKendala_' + nim);
+  if (el) el.classList.toggle('show', value === 'Lainnya');
+}
+
+function prefillForm(nim, data) {
+  // dipanggil setelah render, element sudah ada di DOM
+  // PENTING: untuk SESI BARU, field topik/status/kendala/bimbingan-ke HARUS KOSONG.
+  // data di sini adalah entri progress TERAKHIR (sesi lalu) — hanya dipakai untuk
+  // ditampilkan di kotak "Sesi Terakhir" (read-only), BUKAN untuk auto-fill form input.
+  // Auto-fill sebelumnya menyebabkan dosen mengira sudah terisi, tidak menyentuh field
+  // itu, padahal formData JS-nya tetap kosong — berakibat data tersimpan tidak konsisten.
+  setTimeout(() => {
+    const tglEl = document.getElementById('tglBimbingan_' + nim);
+    if (tglEl) {
+      const todayLocal = getTodayLocal();
+      tglEl.value = todayLocal;
+      updateField(nim, 'tglBimbingan', todayLocal); // jangan cuma ubah tampilan, formData ikut diisi
+    }
+    // topikBimbingan, statusProgress, kendalaUtama, bimbinganKe SENGAJA TIDAK di-prefill.
+    // Dosen harus mengisi ulang dari kosong setiap sesi baru.
+  }, 50);
+}
+
+
+// Wrapper aman untuk tombol simpan — hindari masalah karakter spesial di nama
+function saveSingleBtn(btn) {
+  const nim    = btn.dataset.nim;
+  const nama   = btn.dataset.nama;
+  const prodi  = btn.dataset.prodi;
+  const posisi = btn.dataset.posisi;
+  saveSingle(nim, nama, prodi, posisi);
+}
+
+// ============================================================
+// SAVE SINGLE
+// ============================================================
+async function saveSingle(nim, namaMahasiswa, prodi, posisi) {
+  const fd = formData[nim] || {};
+
+  // Validasi
+  if (!fd.tglBimbingan) return showToast('Isi tanggal bimbingan dulu!', 'error');
+  if (!fd.topikBimbingan) return showToast('Isi topik bimbingan dulu!', 'error');
+  if (!fd.statusProgress) return showToast('Pilih status progress dulu!', 'error');
+  if (!fd.kendalaUtama) return showToast('Pilih kendala utama dulu!', 'error');
+  if (!fd.kesanggupan) return showToast('Pilih kesanggupan pendadaran dulu!', 'error');
+
+  const btn = document.getElementById('btnSave_' + nim);
+  btn.disabled = true;
+  btn.classList.add('saving');
+  btn.innerHTML = '⏳ Menyimpan...';
+
+  try {
+    const payload = {
+      action: 'saveProgress',
+      token: dosenToken,
+      dosenNama: dosenNama,
+      nim: nim,
+      namaMahasiswa: namaMahasiswa,
+      prodi: prodi,
+      posisi: posisi,
+      periode: periode,
+      tglBimbingan: fd.tglBimbingan || periode,
+      bimbinganKe: fd.bimbinganKe || '',
+      topikBimbingan: fd.topikBimbingan || '',
+      statusProgress: fd.statusProgress,
+      progressDetail: fd.progressDetail || '',
+      kendalaUtama: fd.kendalaUtama,
+      kendalaDetail: fd.kendalaDetail || '',
+      kesanggupan: fd.kesanggupan,
+      catatanDosen: fd.catatanDosen || ''
+    };
+
+    // Kalau ada judul baru
+    if (fd.judulBaru && fd.judulBaru.trim()) {
+      await callGAS({
+        action: 'updateJudul',
+        token: dosenToken,
+        nim: nim,
+        judul: fd.judulBaru.trim()
+      });
+    }
+
+    const res = await callGAS(payload);
+    if (res.status !== 'ok') throw new Error(res.message);
+
+    // Update state — progressData = terbaru, historyData = append
+    const savedEntry = { ...payload, updatedAt: new Date().toLocaleString('id-ID') };
+    progressData[nim] = savedEntry;
+    if (!historyData[nim]) historyData[nim] = [];
+    historyData[nim].push(savedEntry);
+
+    // Update UI card
+    const card = document.getElementById('card_' + nim);
+    card.classList.add('filled');
+    card.querySelector('.mhs-header').style.borderLeftColor = 'var(--green-lt)';
+
+    // Update status pill
+    const metaDiv = card.querySelectorAll('.mhs-meta')[1];
+    if (metaDiv) {
+      const keLabel = fd.bimbinganKe ? ' #' + fd.bimbinganKe : '';
+      metaDiv.innerHTML = `
+        <span class="status-pill saved">✓ Tersimpan</span>
+        <span class="status-pill saved" style="background:#dbeafe;color:#1e40af">${fd.statusProgress}</span>
+        <span class="status-pill saved" style="background:#f3e8ff;color:#6b21a8">Bimbingan${keLabel}</span>
+      `;
+    }
+
+    updateProgressBar();
+    showToast('✅ Progress ' + namaMahasiswa.split(' ')[0] + ' tersimpan!', 'success');
+
+    // Tutup card
+    setTimeout(() => {
+      card.classList.remove('open');
+    }, 800);
+
+  } catch(err) {
+    showToast('Gagal menyimpan: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('saving');
+    btn.innerHTML = '💾 Simpan Progress';
+  }
+}
+
+// ============================================================
+// SAVE ALL
+// ============================================================
+async function saveAll() {
+  const unfilledList = mahasiswaList.filter(m => !progressData[String(m.nim)]);
+  
+  if (unfilledList.length === 0) {
+    showToast('Semua mahasiswa sudah tersimpan! 🎉', 'success');
+    return;
+  }
+
+  // Buka semua card yang belum diisi
+  unfilledList.forEach(m => {
+    const card = document.getElementById('card_' + m.nim);
+    if (card && !card.classList.contains('open')) {
+      card.classList.add('open');
+    }
+  });
+
+  showToast(`${unfilledList.length} mahasiswa belum diisi — lengkapi dulu ya!`, 'error');
+  
+  // Scroll ke yang pertama belum diisi
+  if (unfilledList.length > 0) {
+    const firstCard = document.getElementById('card_' + unfilledList[0].nim);
+    if (firstCard) firstCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ============================================================
+// UPDATE PROGRESS BAR
+// ============================================================
+function updateProgressBar() {
+  const total = mahasiswaList.length;
+  const filled = mahasiswaList.filter(m => historyData[String(m.nim)] && historyData[String(m.nim)].length > 0).length;
+  const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+  const fill = document.getElementById('progressFill');
+  const lbl = document.getElementById('pctLabel');
+  if (fill) fill.style.width = pct + '%';
+  if (lbl) lbl.textContent = pct + '%';
+
+  // Update stat cards
+  const statNums = document.querySelectorAll('.stat-item .num');
+  if (statNums[1]) statNums[1].textContent = filled;
+  if (statNums[2]) statNums[2].textContent = total - filled;
+}
+
+// ============================================================
+// GAS API CALL
 // ============================================================
 // Kadang Google Apps Script mengembalikan halaman HTML (redirect/error sementara,
 // rate limit, dsb) bukan JSON — ini menyebabkan "Unexpected token '<'" saat di-parse.
-// Kejadiannya tidak konsisten, jadi kita retry beberapa kali sebelum menyerah.
+// Kejadiannya tidak konsisten (kadang berhasil, kadang gagal), jadi kita retry
+// beberapa kali sebelum benar-benar menyerah, dan beri pesan yang jelas kalau gagal.
 async function callGAS(payload, attempt = 1) {
   const MAX_ATTEMPTS = 3;
   let res;
@@ -925,6 +1419,7 @@ async function callGAS(payload, attempt = 1) {
       body: JSON.stringify(payload)
     });
   } catch (networkErr) {
+    // Gagal total (offline, DNS, dsb) — retry kalau masih ada kesempatan
     if (attempt < MAX_ATTEMPTS) {
       await new Promise(r => setTimeout(r, 800 * attempt));
       return callGAS(payload, attempt + 1);
@@ -936,6 +1431,7 @@ async function callGAS(payload, attempt = 1) {
   try {
     return JSON.parse(rawText);
   } catch (parseErr) {
+    // Respons bukan JSON valid (kemungkinan HTML dari Google: redirect/limit/error sementara)
     if (attempt < MAX_ATTEMPTS) {
       await new Promise(r => setTimeout(r, 800 * attempt));
       return callGAS(payload, attempt + 1);
@@ -946,14 +1442,311 @@ async function callGAS(payload, attempt = 1) {
 }
 
 // ============================================================
-// TOAST
+// UI HELPERS
 // ============================================================
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast show ' + type;
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => { t.classList.remove('show'); }, 3000);
 }
+
+function showError(title, msg) {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="error-wrap">
+      <div class="icon">🔒</div>
+      <h2>${title}</h2>
+      <p>${msg}</p>
+    </div>
+  `;
+}
+
+// ============================================================
+// MODAL TAMBAH MAHASISWA
+// ============================================================
+function openModal() {
+  document.getElementById('newNama').value = '';
+  document.getElementById('newNim').value = '';
+  document.getElementById('newProdi').value = '';
+  document.getElementById('newPosisi').value = '';
+  document.getElementById('newJudul').value = '';
+  document.getElementById('modalDosenLabel').textContent = 
+    'Menambahkan mahasiswa baru ke daftar bimbingan ' + dosenNama.split(',')[0];
+  document.getElementById('modalTambah').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalTambah').classList.remove('show');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalTambah')) closeModal();
+}
+
+async function simpanMahasiswaBaru() {
+  const nama  = document.getElementById('newNama').value.trim();
+  const nim   = document.getElementById('newNim').value.trim();
+  const prodi = document.getElementById('newProdi').value;
+  const posisi = document.getElementById('newPosisi').value;
+  const judul = document.getElementById('newJudul').value.trim();
+
+  if (!nama)  return showToast('Nama mahasiswa wajib diisi!', 'error');
+  if (!nim)   return showToast('NIM wajib diisi!', 'error');
+  if (!prodi) return showToast('Pilih program studi dulu!', 'error');
+  if (!posisi) return showToast('Pilih posisi pembimbing dulu!', 'error');
+
+  // Cek duplikat NIM lokal
+  if (mahasiswaList.find(m => String(m.nim) === String(nim))) {
+    return showToast('NIM ' + nim + ' sudah ada di daftar!', 'error');
+  }
+
+  const btn = document.getElementById('btnSimpanBaru');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Menyimpan...';
+
+  try {
+    const res = await callGAS({
+      action: 'addMahasiswa',
+      token: dosenToken,
+      dosenNama: dosenNama,
+      nim: nim,
+      nama: nama,
+      prodi: prodi,
+      posisi: posisi,
+      judul: judul || ''
+    });
+
+    if (res.status !== 'ok') throw new Error(res.message);
+
+    // Tambah ke list lokal
+    const newMhs = { nim, nama, prodi, judul, posisi, kategori: '' };
+    mahasiswaList.push(newMhs);
+    formData[nim] = {
+      tglBimbingan: getTodayLocal(),
+      bimbinganKe: '', topikBimbingan: '',
+      statusProgress: '', progressDetail: '',
+      kendalaUtama: '', kendalaDetail: '',
+      kesanggupan: '', catatanDosen: '', judulBaru: ''
+    };
+
+    closeModal();
+    showToast('✅ ' + nama.split(' ')[0] + ' berhasil ditambahkan!', 'success');
+
+    // Re-render UI
+    renderUI();
+
+  } catch(err) {
+    showToast('Gagal: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '➕ Tambahkan ke Daftar';
+  }
+}
+
+
+// ============================================================
+// EXPORT PDF — LAPORAN DOSEN
+// ============================================================
+function exportPDF() {
+  const filled = mahasiswaList.filter(m => progressData[String(m.nim)]);
+  if (filled.length === 0) {
+    showToast('Belum ada data yang tersimpan!', 'error');
+    return;
+  }
+
+  showToast('⏳ Membuat PDF...', '');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const now = new Date();
+  const tglCetak = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  const namaShort = dosenNama.split(',')[0];
+
+  // ── HEADER ──
+  doc.setFillColor(26, 26, 46);
+  doc.rect(0, 0, 210, 38, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('TRACKA — Laporan Progress Bimbingan TA/Skripsi', 14, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Pekan TRACKA 22–27 Juni 2026  |  BIPA Magelang', 14, 21);
+  doc.text('Dicetak: ' + tglCetak, 14, 28);
+
+  // Accent bar
+  doc.setFillColor(233, 69, 96);
+  doc.rect(0, 38, 210, 2, 'F');
+
+  // ── INFO DOSEN ──
+  doc.setTextColor(26, 26, 46);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Dosen Pembimbing', 14, 48);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(dosenNama, 14, 55);
+
+  // ── SUMMARY CARDS ──
+  const cardData = [
+    { label: 'Total Mahasiswa', val: mahasiswaList.length },
+    { label: 'Sudah Dilaporkan', val: filled.length },
+    { label: 'Siap Maju Juli', val: Object.values(progressData).filter(p => p.kesanggupan === 'Siap Juli').length },
+    { label: 'Total Sesi', val: Object.keys(progressData).length },
+  ];
+  const cardW = 43, cardH = 18, cardY = 60;
+  cardData.forEach((c, i) => {
+    const x = 14 + i * (cardW + 2);
+    doc.setFillColor(240, 242, 245);
+    doc.roundedRect(x, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(26, 26, 46);
+    doc.text(String(c.val), x + cardW/2, cardY + 10, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(c.label, x + cardW/2, cardY + 15, { align: 'center' });
+  });
+
+  // ── TABEL PROGRESS TERBARU PER MAHASISWA ──
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Status Progress Mahasiswa', 14, 88);
+
+  // Pisah PB1 dan PB2
+  const pb1 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 1');
+  const pb2 = mahasiswaList.filter(m => m.posisi === 'Pembimbing 2');
+  const allSorted = [...pb1, ...pb2];
+
+  const tableRows = allSorted.map((m, i) => {
+    const nim = String(m.nim);
+    const p = progressData[nim];
+    return [
+      i + 1,
+      m.nama,
+      m.nim,
+      m.posisi === 'Pembimbing 1' ? 'PB1' : 'PB2',
+      p ? (p.tglBimbingan || p.periode || '—') : '—',
+      p ? 'Ke-' + (p.bimbinganKe || '?') : '—',
+      p ? (p.topikBimbingan || '—') : '—',
+      p ? (p.statusProgress || '—') : 'Belum diisi',
+      p ? (p.kesanggupan || '—') : '—',
+      p ? (p.catatanDosen || '—') : '—',
+    ];
+  });
+
+  doc.autoTable({
+    startY: 91,
+    head: [['No','Nama','NIM','Pos','Tgl','Sesi','Topik','Status Progress','Kesanggupan','Catatan']],
+    body: tableRows,
+    styles: { fontSize: 7.5, cellPadding: 2.5, overflow: 'linebreak' },
+    headStyles: { fillColor: [26, 26, 46], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+    columnStyles: {
+      0: { cellWidth: 7 },
+      1: { cellWidth: 38 },
+      2: { cellWidth: 16 },
+      3: { cellWidth: 9 },
+      4: { cellWidth: 17 },
+      5: { cellWidth: 10 },
+      6: { cellWidth: 28 },
+      7: { cellWidth: 30 },
+      8: { cellWidth: 22 },
+      9: { cellWidth: 18 },
+    },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+    didParseCell: function(data) {
+      if (data.section === 'body') {
+        if (data.column.index === 8) {
+          const val = data.cell.raw;
+          if (val === 'Siap Juli') data.cell.styles.textColor = [45, 106, 79];
+          else if (val === 'Siap Agustus') data.cell.styles.textColor = [146, 64, 14];
+          else if (val === 'Belum diisi') data.cell.styles.textColor = [233, 69, 96];
+        }
+        if (data.column.index === 7 && data.cell.raw === 'Belum diisi') {
+          data.cell.styles.textColor = [233, 69, 96];
+        }
+      }
+    }
+  });
+
+  // ── TANDA TANGAN ──
+  const finalY = doc.lastAutoTable.finalY + 14;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(26, 26, 46);
+  doc.text('Magelang, ' + tglCetak, 140, finalY);
+  doc.text('Dosen Pembimbing,', 140, finalY + 7);
+  doc.line(140, finalY + 28, 196, finalY + 28);
+  doc.setFont('helvetica', 'bold');
+  doc.text(namaShort, 140, finalY + 33);
+
+  // ── FOOTER ──
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7.5);
+    doc.setTextColor(180);
+    doc.text('TRACKA — Sistem Tracking Aktivitas Akademik TA/Skripsi | BIPA', 14, 290);
+    doc.text('Hal ' + i + '/' + pageCount, 196, 290, { align: 'right' });
+  }
+
+  const filename = 'TRACKA_Laporan_' + namaShort.replace(/\s+/g,'_') + '_' +
+    now.toISOString().split('T')[0] + '.pdf';
+  doc.save(filename);
+  showToast('✅ PDF berhasil diunduh!', 'success');
+}
+
 </script>
+
+<!-- MODAL TAMBAH MAHASISWA -->
+<div class="modal-overlay" id="modalTambah" onclick="closeModalOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Tambah Mahasiswa Baru</div>
+    <div class="modal-subtitle" id="modalDosenLabel">Mahasiswa bimbingan akan ditambahkan ke daftar kamu</div>
+
+    <div class="modal-field">
+      <div class="field-label">Nama Lengkap Mahasiswa <span class="req">*</span></div>
+      <input type="text" id="newNama" placeholder="Contoh: Budi Santoso" />
+    </div>
+
+    <div class="modal-field">
+      <div class="field-label">NIM <span class="req">*</span></div>
+      <input type="text" id="newNim" placeholder="Contoh: 2322050" inputmode="numeric" />
+    </div>
+
+    <div class="modal-field">
+      <div class="field-label">Program Studi <span class="req">*</span></div>
+      <select id="newProdi">
+        <option value="">— Pilih Prodi —</option>
+        <option value="D3 Manajemen Informatika">D3 Manajemen Informatika</option>
+        <option value="S1 Teknik Informatika">S1 Teknik Informatika</option>
+      </select>
+    </div>
+
+    <div class="modal-field">
+      <div class="field-label">Posisi Kamu sebagai <span class="req">*</span></div>
+      <select id="newPosisi">
+        <option value="">— Pilih posisi —</option>
+        <option value="Pembimbing 1">Pembimbing 1</option>
+        <option value="Pembimbing 2">Pembimbing 2</option>
+      </select>
+    </div>
+
+    <div class="modal-field">
+      <div class="field-label">Judul TA/Skripsi <span style="color:var(--muted);font-weight:400">(opsional, bisa diisi nanti)</span></div>
+      <textarea id="newJudul" placeholder="Judul lengkap TA/Skripsi..." rows="2"></textarea>
+    </div>
+
+    <button class="btn-submit" id="btnSimpanBaru" onclick="simpanMahasiswaBaru()">
+      ➕ Tambahkan ke Daftar
+    </button>
+    <button class="btn-modal-cancel" onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
 </body>
 </html>
